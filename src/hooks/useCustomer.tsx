@@ -6,7 +6,7 @@ export const useCustomers = () => {
   const fetchCustomers = async () => {
     try {
       // Use the appropriate endpoint from the Endpoint object for fetching customer types
-      const response = await fetchGet<{ data: Customer[] }>(Endpoint.GET_CUSTOMER);
+      const response = await fetchGet<{ data: Customer[] }>(Endpoint.GET_CUSTOMERS);
       return response.data; // Assuming the response contains a `data` field that holds the customer types
     } catch (error) {
       console.error('Error fetching customer types:', error);

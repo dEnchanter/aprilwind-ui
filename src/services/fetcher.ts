@@ -3,7 +3,10 @@
 import { getAccessToken } from '@/utils/storage';
 import { baseUrl, apiVersionPath } from './api';  // Adjust the path as necessary
 
-const fullApiUrl = `${baseUrl}/${apiVersionPath}`;
+// Ensure proper URL construction with trailing slash
+const fullApiUrl = apiVersionPath
+  ? `${baseUrl}/${apiVersionPath}`
+  : baseUrl;
 
 const createHeaders = (extraHeaders?: Record<string, string>) => {
   const headers = new Headers({
@@ -12,7 +15,8 @@ const createHeaders = (extraHeaders?: Record<string, string>) => {
 
   const token = getAccessToken();
   if (token) {
-    headers.append('token', `${token}`);
+    // Use Bearer token format as per new backend
+    headers.append('Authorization', `Bearer ${token}`);
   }
 
   if (extraHeaders) {
@@ -29,7 +33,8 @@ const setToken = (extraHeaders?: Record<string, string>) => {
 
   const token = getAccessToken();
   if (token) {
-    headers.append('token', `${token}`);
+    // Use Bearer token format as per new backend
+    headers.append('Authorization', `Bearer ${token}`);
   }
 
   if (extraHeaders) {
@@ -41,26 +46,39 @@ const setToken = (extraHeaders?: Record<string, string>) => {
   return headers;
 };
 
+// Custom error class to preserve response status
+class FetchError extends Error {
+  response: { status: number; data: any };
+
+  constructor(message: string, status: number, data: any) {
+    super(message);
+    this.name = 'FetchError';
+    this.response = { status, data };
+  }
+}
+
 // Define a generic type for handling responses
 const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
     const errorData = await response.json();
+    let errorMessage = 'Something went wrong';
+
     if (errorData.message && Array.isArray(errorData.message) && errorData.message.length >= 2) {
-      // If 'message' is an array and has at least two elements, throw the second one
-      throw new Error(errorData.message[1]);
+      // If 'message' is an array and has at least two elements, use the second one
+      errorMessage = errorData.message[1];
     } else if (errorData.message) {
-      // If 'message' is a string, throw it directly
-      throw new Error(errorData.message);
-    } else {
-      // Fallback error message
-      throw new Error('Something went wrong');
+      // If 'message' is a string, use it directly
+      errorMessage = errorData.message;
     }
+
+    // Throw custom error with status code
+    throw new FetchError(errorMessage, response.status, errorData);
   }
   return response.json() as Promise<T>;
 }
 
 export const fetchGet = async <T>(endpoint: string, extraHeaders?: Record<string, string>): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   try {
     const response = await fetch(url, {
       method: 'GET',
@@ -88,7 +106,7 @@ export const fetchGet2 = async <T>(endpoint: string, extraHeaders?: Record<strin
 }
 
 export const fetchPost = async <T, U>(endpoint: string, data: U, extraHeaders?: Record<string, string>): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   try {
     const response = await fetch(url, {
       method: 'POST',
@@ -118,7 +136,7 @@ export const fetchPost2 = async <T, U>(endpoint: string, data: U, extraHeaders?:
 }
 
 export const fetchPostMultipart = async <T, U>(endpoint: string, data: U, files: Record<string, File>, extraHeaders?: Record<string, string>): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   const formData = new FormData();
 
   // Append regular fields to form data
@@ -155,7 +173,7 @@ export const fetchPostMultipart2 = async <T, U>(
   files: Record<string, File>,
   extraHeaders?: Record<string, string>
 ): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   const formData = new FormData();
 
   // Append files to form data
@@ -180,7 +198,7 @@ export const fetchPostMultipart2 = async <T, U>(
 };
 
 export const fetchPut = async <T, U>(endpoint: string, data: U, extraHeaders?: Record<string, string>): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   try {
     const response = await fetch(url, {
       method: 'PUT',
@@ -195,7 +213,7 @@ export const fetchPut = async <T, U>(endpoint: string, data: U, extraHeaders?: R
 }
 
 export const fetchPatch = async <T, U>(endpoint: string, data: U, extraHeaders?: Record<string, string>): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   try {
     const response = await fetch(url, {
       method: 'PATCH',
@@ -210,7 +228,7 @@ export const fetchPatch = async <T, U>(endpoint: string, data: U, extraHeaders?:
 }
 
 export const fetchDelete = async <T>(endpoint: string, extraHeaders?: Record<string, string>): Promise<T> => {
-  const url = `${fullApiUrl}${endpoint}`;
+  const url = `${fullApiUrl}/${endpoint}`;
   try {
     const response = await fetch(url, {
       method: 'DELETE',

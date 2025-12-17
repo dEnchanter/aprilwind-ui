@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx shadcn:*)",
+      "Bash(npm install:*)",
+      "Bash(ls:*)",
+      "Bash(npm run build:*)",
+      "Bash(curl:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx tsc:*)",
+      "Bash(for file in adjust-stock-dialog.tsx delete-material-dialog.tsx edit-material-dialog.tsx material-picker.tsx)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(! grep -q \"eslint-disable @typescript-eslint/no-explicit-any\" \"$file\")",
+      "Bash(then sed -i '1i/* eslint-disable @typescript-eslint/no-explicit-any */' \"$file\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

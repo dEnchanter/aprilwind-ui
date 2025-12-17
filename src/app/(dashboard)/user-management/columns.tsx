@@ -36,6 +36,11 @@ export const staffColumns: ColumnDef<Staff>[] = [
     id: 'createdAt',
     accessorKey: 'createdAt',
     header: 'Date Created',
-    cell: ({ getValue }) => formatDate(getValue() as string),
+    cell: ({ row, getValue }) => {
+      const value = getValue() as string;
+      // Fallback to dateCreated if createdAt is not available
+      const dateValue = value || (row.original as any).dateCreated;
+      return dateValue ? formatDate(dateValue) : '-';
+    },
   },
 ];

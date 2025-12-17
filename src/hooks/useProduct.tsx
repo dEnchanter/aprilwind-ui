@@ -6,7 +6,7 @@ export const useProduct = () => {
   const fetchProducts = async () => {
     try {
       // Use the appropriate endpoint from the Endpoint object for fetching products
-      const response = await fetchGet<{ data: Product[] }>(Endpoint.GET_PRODUCTION);
+      const response = await fetchGet<{ data: Product[] }>(Endpoint.GET_PRODUCTIONS);
       return response.data; // Assuming the response contains a `data` field that holds the products
     } catch (error) {
       console.error('Error fetching products:', error);

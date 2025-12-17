@@ -37,11 +37,18 @@ export const formatDate = (dateString: string) => {
   }
 
   try {
+    // Handle both ISO string and regular date string formats
     const date = parseISO(dateString);
+
+    // Check if the parsed date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+
     const utcDate = toZonedTime(date, 'UTC'); // Convert the date to UTC
     return format(utcDate, 'MMMM d, yyyy, hh:mm:ss aa'); // Format the date
   } catch (error) {
-    console.error('Error parsing date:', error);
+    console.error('Error parsing date:', error, 'Input:', dateString);
     return 'Invalid date';
   }
 };

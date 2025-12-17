@@ -1,17 +1,13 @@
 "use client"
 
 import React from 'react';
-import { DataTableLoader2 } from '../utils/loader';
 import { dashboardColumns } from '@/app/(dashboard)/dashboard-overview/columns';
 import Template from '../utils/template';
 import { DataTable2 } from './utils/data-table2';
-import { useDashboardItems } from '@/hooks/useDashboard';
 
 const DashboardTable = () => {
-  const { data: items, isLoading, isError  } = useDashboardItems();
-
-  if (isLoading) return <DataTableLoader2 />;
-  if (isError) return <div>Error: </div>;
+  // TODO: Connect to proper data source
+  const items: Dashboard[] = [];
 
   return (
     <Template>

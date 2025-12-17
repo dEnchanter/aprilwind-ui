@@ -1,42 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/config/rolesColumns.ts
-import { formatDate } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const rolesColumns: ColumnDef<Role>[] = [
   {
+    id: 'select',
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        checked={table.getIsAllPageRowsSelected()}
+        onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+        className="w-4 h-4 rounded border-gray-200 text-brand-400 focus:ring-brand-300 focus:border-brand-300"
+      />
+    ),
+    cell: ({ row }) => (
+      <input
+        type="checkbox"
+        checked={row.getIsSelected()}
+        onChange={(e) => row.toggleSelected(e.target.checked)}
+        className="w-4 h-4 rounded border-gray-200 text-brand-400 focus:ring-brand-300 focus:border-brand-300"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
     id: 'sn',
-    header: 'S/N', // Header for the counter column
-    cell: ({ row }: { row: { index: number } }) => row.index + 1, // Indexing starts from 0, so add 1 for S/N
+    header: 'S/N',
+    cell: ({ row }: { row: { index: number } }) => row.index + 1,
   },
   {
     id: 'name',
     accessorKey: 'name',
     header: 'Role Name',
-    cell: (info: { getValue: () => any }) => info.getValue(),
+    cell: (info: { getValue: () => any }) => (
+      <div className="font-medium">{info.getValue()}</div>
+    ),
   },
   {
-    id: 'code',
-    accessorKey: 'code',
-    header: 'Code',
-    cell: (info: { getValue: () => any }) => info.getValue(),
-  },
-  {
-    id: 'unit',
-    accessorKey: 'unit',
-    header: 'Unit',
-    cell: (info: { getValue: () => any }) => info.getValue(),
-  },
-  {
-    id: 'isLogin',
-    accessorKey: 'isLogin',
-    header: 'Is Login?',
-    cell: (info: { getValue: () => any }) => (info.getValue() ? 'Yes' : 'No'),
-  },
-  {
-    id: 'createdAt',
-    accessorKey: 'createdAt',
-    header: 'Date Created',
-    cell: ({ getValue }) => formatDate(getValue() as string),
+    id: 'description',
+    accessorKey: 'description',
+    header: 'Description',
+    cell: (info: { getValue: () => any }) => (
+      <div className="text-sm text-gray-600">{info.getValue()}</div>
+    ),
   },
 ];

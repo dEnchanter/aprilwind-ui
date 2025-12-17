@@ -139,7 +139,7 @@ const InvoiceForm = ({ className, closeDialog, initialValues }: InvoiceFormProps
                         ) : staffError ? (
                           <SelectItem disabled value="nil">Error loading staff</SelectItem>
                         ) : (
-                          staffMembers?.map((staff) => (
+                          staffMembers?.data?.map((staff) => (
                             <SelectItem key={staff.id} value={staff.id.toString()}>
                               {staff.staffName}
                             </SelectItem>

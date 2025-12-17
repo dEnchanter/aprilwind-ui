@@ -2,6 +2,7 @@
 // src/config/itemTypeColumns.ts
 import { formatDate } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
+import { Badge } from '@/components/ui/badge';
 
 export const itemTypeColumns: ColumnDef<ItemType>[] = [
   {
@@ -26,6 +27,22 @@ export const itemTypeColumns: ColumnDef<ItemType>[] = [
     accessorKey: 'unit',
     header: 'Unit',
     cell: (info: { getValue: () => any }) => info.getValue(),
+  },
+  {
+    id: 'isActive',
+    accessorKey: 'isActive',
+    header: 'Status',
+    cell: ({ getValue }: { getValue: () => any }) => {
+      const isActive = getValue();
+      return (
+        <Badge
+          variant={isActive ? "default" : "secondary"}
+          className={isActive ? "bg-green-100 text-green-700 hover:bg-green-100" : "bg-gray-100 text-gray-600 hover:bg-gray-100"}
+        >
+          {isActive ? 'Active' : 'Inactive'}
+        </Badge>
+      );
+    },
   },
   {
     id: 'createdAt',

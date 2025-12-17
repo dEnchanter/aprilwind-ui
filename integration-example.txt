@@ -1,0 +1,24 @@
+// Example of how to add Item Types tab to your existing items-management page
+
+// Add this to your existing TabsList in items-management/page.tsx:
+
+<TabsTrigger
+  value="item-types"
+  className="data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2 py-2.5"
+>
+  <Tags className="h-4 w-4" />
+  <span className="hidden sm:inline">Item Types</span>
+  <span className="sm:hidden">Types</span>
+</TabsTrigger>
+
+// Add this to your TabsContent sections:
+
+<TabsContent value="item-types" className="space-y-4">
+  <ItemTypeTable />
+</TabsContent>
+
+// Don't forget to import:
+import { Tags } from "lucide-react";
+import ItemTypeTable from "@/components/tables/ItemTypeTable";
+
+// And update your activeTab state to include "item-types" as an option

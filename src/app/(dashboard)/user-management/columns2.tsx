@@ -1,5 +1,7 @@
 // app/(dashboard)/customer-management/columns.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
+"use client"
+
 import { capitalize } from '@/lib/utils';
 import { ColumnDef } from '@tanstack/react-table';
 
@@ -14,6 +16,18 @@ export const customerColumns: ColumnDef<Customer>[] = [
     accessorKey: 'name',
     header: 'Name',
     cell: (info: { getValue: () => any }) => info.getValue(),
+  },
+  {
+    id: 'email',
+    accessorKey: 'email',
+    header: 'Email',
+    cell: (info: { getValue: () => any }) => info.getValue() || 'N/A',
+  },
+  {
+    id: 'phone',
+    accessorKey: 'phone',
+    header: 'Phone',
+    cell: (info: { getValue: () => any }) => info.getValue() || 'N/A',
   },
   {
     id: 'address',

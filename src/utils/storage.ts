@@ -6,32 +6,65 @@ interface UserData {
 }
 
 export const saveAccessToken = (token: string): void => {
-  localStorage.setItem('token', token);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('token', token);
+  }
 };
 
 export const getAccessToken = (): string | null => {
-  return localStorage.getItem('token');
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token');
+  }
+  return null;
 };
 
 export const clearAccessToken = (): void => {
-  localStorage.removeItem('token');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('token');
+  }
+};
+
+export const saveRefreshToken = (token: string): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('refreshToken', token);
+  }
+};
+
+export const getRefreshToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('refreshToken');
+  }
+  return null;
+};
+
+export const clearRefreshToken = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('refreshToken');
+  }
 };
 
 export const saveUserData = (response: { data: any }): void => {
-  const { email, phoneNumber, staffName } = response.data;
+  if (typeof window !== 'undefined') {
+    const { email, phoneNumber, staffName } = response.data;
 
-  const userData: UserData = { email, phoneNumber, staffName };
+    const userData: UserData = { email, phoneNumber, staffName };
 
-  localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("user", JSON.stringify(userData));
+  }
 };
 
 export const getUserData = (): UserData | null => {
-  const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) as UserData : null;
+  if (typeof window !== 'undefined') {
+    const user = localStorage.getItem("user");
+    return user ? JSON.parse(user) as UserData : null;
+  }
+  return null;
 };
 
 export const clearUserData = (): void => {
-  localStorage.removeItem('user');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('user');
+  }
 };
 
 export const saveUserRoleDetail = (role: Role): void => {
@@ -60,5 +93,7 @@ export const getUserRoleDetail = (): Role | null => {
 };
 
 export const clearUserRoleDetail = (): void => {
-  localStorage.removeItem('userRole');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('userRole');
+  }
 };

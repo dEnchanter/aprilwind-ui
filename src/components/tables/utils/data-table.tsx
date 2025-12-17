@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { JSX, useState } from "react"
+import { JSX, useState, useEffect } from "react"
 import { Input } from "../../ui/input"
 import { FiSearch } from "react-icons/fi";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "../../ui/dropdown-menu"
@@ -43,6 +43,7 @@ interface DataTableProps<TData, TValue> {
     totalItems: number;
   };
   onDateRangeChange?: (startDate: string, endDate: string) => void;
+  hideTableControls?: boolean; // New prop to hide filter and column controls
 }
 
 export function DataTable<TData, TValue>({
@@ -53,14 +54,26 @@ export function DataTable<TData, TValue>({
   serverSidePagination = false,
   onPaginationChange,
   pagination,
+  hideTableControls = false,
 }: DataTableProps<TData, TValue>) {
 
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [selectedColumn, setSelectedColumn] = useState<string>(columns[0].id as string)
+  const [selectedColumn, setSelectedColumn] = useState<string>("")
   const [filterValue, setFilterValue] = useState<string>("")
+
+  // Set default selected column after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (selectedColumn === "" && columns.length > 0) {
+      // Skip 'select' column and use the first actual data column
+      const firstDataColumn = columns.find(col => col.id !== 'select' && col.id !== 'actions');
+      if (firstDataColumn?.id) {
+        setSelectedColumn(firstDataColumn.id as string);
+      }
+    }
+  }, [columns, selectedColumn])
 
   const table = useReactTable({
     data,
@@ -95,75 +108,77 @@ export function DataTable<TData, TValue>({
   return (
     <>
       {/* TABLE EXTRAS */}
-      <div className="flex items-center justify-between">
+      {!hideTableControls && (
+        <div className="flex items-center justify-between">
 
-        <div className="flex items-center py-4 space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="mr-2">
-                {selectedColumn || "Select Column"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanFilter())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.id === selectedColumn}
-                    onCheckedChange={() => setSelectedColumn(column.id)}
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Search Input with Icon */}
-          <div className="relative max-w-sm">
-            <Input
-              placeholder={`Filter by ${selectedColumn}...`}
-              value={filterValue}
-              onChange={handleFilterChange}
-              className="border-none shadow-sm pl-10" // Add padding-left to make space for the icon
-            />
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          </div>
-        </div>
-
-        <div className="">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) => column.getCanHide()
-                )
-                .map((column) => {
-                  return (
+          <div className="flex items-center py-4 space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="mr-2">
+                  {selectedColumn || "Select Column"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanFilter())
+                  .map((column) => (
                     <DropdownMenuCheckboxItem
                       key={column.id}
                       className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value: any) =>
-                        column.toggleVisibility(!!value)
-                      }
+                      checked={column.id === selectedColumn}
+                      onCheckedChange={() => setSelectedColumn(column.id)}
                     >
                       {column.id}
                     </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Search Input with Icon */}
+            <div className="relative max-w-sm">
+              <Input
+                placeholder={`Filter by ${selectedColumn}...`}
+                value={filterValue}
+                onChange={handleFilterChange}
+                className="border-none shadow-sm pl-10" // Add padding-left to make space for the icon
+              />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
+
+          <div className="">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) => column.getCanHide()
                   )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  .map((column) => {
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={column.id}
+                        className="capitalize"
+                        checked={column.getIsVisible()}
+                        onCheckedChange={(value: any) =>
+                          column.toggleVisibility(!!value)
+                        }
+                      >
+                        {column.id}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* TABLE */}
       <div className="rounded-md overflow-x-auto">
@@ -207,16 +222,20 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* PAGINATION */}
-      {serverSidePagination ? (
-        <DataTablePagination2
-          table={table}
-          currentPage={pagination?.currentPage}
-          totalPages={pagination?.totalPages}
-          onPageChange={(page) => onPaginationChange && onPaginationChange(page, pagination?.pageSize || 10)}
-          onPageSizeChange={(size) => onPaginationChange && onPaginationChange(pagination?.currentPage || 1, size)}
-        />
-      ) : (
-        <DataTablePagination2 table={table} />
+      {!hideTableControls && (
+        <>
+          {serverSidePagination ? (
+            <DataTablePagination2
+              table={table}
+              currentPage={pagination?.currentPage}
+              totalPages={pagination?.totalPages}
+              onPageChange={(page) => onPaginationChange && onPaginationChange(page, pagination?.pageSize || 10)}
+              onPageSizeChange={(size) => onPaginationChange && onPaginationChange(pagination?.currentPage || 1, size)}
+            />
+          ) : (
+            <DataTablePagination2 table={table} />
+          )}
+        </>
       )}
     </>
   )

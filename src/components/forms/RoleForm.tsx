@@ -22,8 +22,7 @@ const RoleForm = ({ className, closeDialog, initialValues }: { className?: strin
     resolver: zodResolver(roleSchema),
     defaultValues: {
       name: initialValues?.name || "",
-      code: initialValues?.code || "",
-      unit: initialValues?.unit || "",
+      description: initialValues?.description || "",
       isLogin: initialValues?.isLogin ?? true,
     },
   });
@@ -37,10 +36,10 @@ const RoleForm = ({ className, closeDialog, initialValues }: { className?: strin
 
     try {
       if (initialValues?.id) {
-        const responseData: any = await fetchPatch(`${Endpoint.UPDATE_ROLES}/${initialValues.id}`, processedData);
+        const responseData: any = await fetchPatch(`${Endpoint.UPDATE_ROLE(initialValues.id)}`, processedData);
         toast.success(responseData?.message || "Role updated successfully!");
       } else {
-        const responseData: any = await fetchPost(Endpoint.CREATE_ROLES, processedData);
+        const responseData: any = await fetchPost(Endpoint.CREATE_ROLE, processedData);
         toast.success(responseData?.message || "Role created successfully!");
       }
       closeDialog();
@@ -73,24 +72,12 @@ const RoleForm = ({ className, closeDialog, initialValues }: { className?: strin
           />
           <FormField
             control={form.control}
-            name="code"
+            name="description"
             render={({ field }) => (
               <div>
-                <Label>Code</Label>
+                <Label>Description</Label>
                 <FormControl>
-                  <Input placeholder="Code" {...field} />
-                </FormControl>
-              </div>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="unit"
-            render={({ field }) => (
-              <div>
-                <Label>Unit</Label>
-                <FormControl>
-                  <Input placeholder="Unit" {...field} />
+                  <Input placeholder="Description" {...field} />
                 </FormControl>
               </div>
             )}

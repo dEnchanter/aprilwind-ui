@@ -195,7 +195,7 @@ const RawItemsForm = ({ className, closeDialog, initialValues }: RawItemsFormPro
                         ) : itemTypeError ? (
                           <SelectItem disabled value="nil">Error loading categories</SelectItem>
                         ) : (
-                          itemTypes?.map(item => (
+                          itemTypes?.map((item: any) => (
                             <SelectItem key={item.id} value={item.id.toString()}>{item.name}</SelectItem>
                           ))
                         )}

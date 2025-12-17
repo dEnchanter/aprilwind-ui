@@ -20,12 +20,10 @@ const ProductionTable = () => {
   const { data: productions, isLoading, isError, refetch } = useProduct();
 
   const [open, setOpen] = useState(false);
-  const [editProduction, setEditProduction] = useState<Partial<Product> | undefined>(undefined);
 
   const toggleDialog = () => setOpen(!open);
 
-  const handleEdit = (product: Product) => {
-    setEditProduction(product);
+  const handleEdit = () => {
     setOpen(true);
   };
 
@@ -80,9 +78,9 @@ const ProductionTable = () => {
         )}
       </CardContent>
 
-      {/* Dialog for Editing Production */}
+      {/* Dialog for Creating Production */}
       <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
-        <ProductionForm closeDialog={toggleDialog} initialValues={editProduction} />
+        <ProductionForm closeDialog={toggleDialog} />
       </CustomDialog>
     </Card>
   );

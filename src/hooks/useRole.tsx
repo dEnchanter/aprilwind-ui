@@ -7,7 +7,7 @@ export const useRoles = () => {
     try {
       // Use the appropriate endpoint from the Endpoint object for fetching roles
       const response = await fetchGet<{ data: Role[] }>(Endpoint.GET_ROLES);
-      return response.data; // Assuming the response contains a `data` field that holds the roles
+      return response; // Return the full response to match expected structure
     } catch (error) {
       console.error('Error fetching roles:', error);
       throw error; // Handle the error as needed
