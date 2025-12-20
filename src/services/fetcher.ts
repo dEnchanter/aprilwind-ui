@@ -60,6 +60,15 @@ class FetchError extends Error {
 // Define a generic type for handling responses
 const handleResponse = async <T>(response: Response): Promise<T> => {
   if (!response.ok) {
+    // Handle 403 Forbidden - redirect to unauthorized page
+    if (response.status === 403) {
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/unauthorized')) {
+        window.location.replace('/unauthorized');
+        // Return a promise that never resolves to prevent showing error UI
+        return new Promise<T>(() => {});
+      }
+    }
+
     const errorData = await response.json();
     let errorMessage = 'Something went wrong';
 

@@ -25,10 +25,12 @@ import {
   MoreHorizontal,
   Edit,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import CustomDialog from '../dialog/CustomDialog';
 import RoleForm from '../forms/RoleForm';
 import { Badge } from '../ui/badge';
+import { RolePermissionsDialog } from '../dialogs/RolePermissionsDialog';
 
 interface RoleTableProps {
   hideAddButton?: boolean;
@@ -40,6 +42,8 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
 
   const [open, setOpen] = useState(false);
   const [editRole, setEditRole] = useState<Partial<Role> | undefined>(undefined);
+  const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -55,6 +59,11 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
     setOpen(true);
   };
 
+  const handleViewPermissions = (role: Role) => {
+    setSelectedRole(role);
+    setPermissionsDialogOpen(true);
+  };
+
   const totalPages = Math.ceil(roles.length / limit);
   const paginatedData = roles.slice((page - 1) * limit, page * limit);
 
@@ -68,6 +77,7 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
                 <TableRow className="bg-gray-50 hover:bg-gray-50">
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Role Name</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Description</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Permissions</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -76,6 +86,7 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
                   <TableRow key={i}>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))}
@@ -121,6 +132,7 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
                 <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Role Name</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Description</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Permissions</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -140,6 +152,19 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
                     </TableCell>
                     <TableCell className="px-6 py-4 text-gray-600">
                       {role.description || 'No description'}
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <Badge
+                        variant={role.permissions && role.permissions.length > 0 ? "default" : "secondary"}
+                        className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity w-fit"
+                        onClick={() => handleViewPermissions(role)}
+                      >
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>
+                          {role.permissions?.length || 0}{' '}
+                          {role.permissions?.length === 1 ? 'permission' : 'permissions'}
+                        </span>
+                      </Badge>
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
                       <DropdownMenu>
@@ -161,6 +186,13 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
                           >
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Role
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleViewPermissions(role)}
+                            className="cursor-pointer"
+                          >
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            Manage Permissions
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -224,6 +256,16 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
           <RoleForm closeDialog={toggleDialog} initialValues={editRole} />
         </CustomDialog>
       )}
+
+      {/* Permissions Dialog */}
+      <RolePermissionsDialog
+        role={selectedRole}
+        open={permissionsDialogOpen}
+        onClose={() => {
+          setPermissionsDialogOpen(false);
+          setSelectedRole(null);
+        }}
+      />
     </>
   );
 };

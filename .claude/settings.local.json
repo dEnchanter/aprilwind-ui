@@ -14,7 +14,16 @@
       "Bash(then sed -i '1i/* eslint-disable @typescript-eslint/no-explicit-any */' \"$file\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git config:*)",
+      "Bash(GIT_TERMINAL_PROMPT=0 git -c credential.helper= push -u origin main)",
+      "Bash(git fetch:*)",
+      "Bash(for dir in configurations customers dashboard-overview invoice-management items-management item-types material-request production-management production-orders product-stock user-management)",
+      "Bash(do if [ -f \"src/app/(dashboard)/$dir/page.tsx\" ])",
+      "Bash(then echo \"✅ $dir\")",
+      "Bash(else echo \"❌ $dir (no page.tsx)\")"
     ],
     "deny": [],
     "ask": []

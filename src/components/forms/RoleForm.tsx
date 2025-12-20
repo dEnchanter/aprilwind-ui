@@ -16,8 +16,11 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { RoleFormData, roleSchema } from "@/schemas/roleSchema";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const RoleForm = ({ className, closeDialog, initialValues }: { className?: string, closeDialog: () => void; initialValues?: Partial<Role> }) => {
+  const queryClient = useQueryClient();
+
   const form = useForm<z.infer<typeof roleSchema>>({
     resolver: zodResolver(roleSchema),
     defaultValues: {
@@ -42,6 +45,10 @@ const RoleForm = ({ className, closeDialog, initialValues }: { className?: strin
         const responseData: any = await fetchPost(Endpoint.CREATE_ROLE, processedData);
         toast.success(responseData?.message || "Role created successfully!");
       }
+
+      // Invalidate roles query to refetch and show new/updated role immediately
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+
       closeDialog();
     } catch (error: any) {
       toast.error(error?.message || "An unexpected error occurred");

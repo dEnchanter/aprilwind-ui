@@ -25,6 +25,13 @@ export const Endpoint = {
   UPDATE_ROLE: (id: number) => `roles/${id}`,
   DELETE_ROLE: (id: number) => `roles/${id}`,
 
+  // Permissions
+  GET_PERMISSIONS: "permissions",
+  ASSIGN_PERMISSIONS_TO_ROLE: (roleId: number) => `roles/${roleId}/permissions`, // POST - replaces all
+  ADD_PERMISSIONS_TO_ROLE: (roleId: number) => `roles/${roleId}/permissions`, // PATCH - adds to existing
+  REMOVE_PERMISSION_FROM_ROLE: (roleId: number, permissionId: number) => `roles/${roleId}/permissions/${permissionId}`, // DELETE
+  GET_ROLE_STAFF: (roleId: number) => `roles/${roleId}/staff`,
+
   // Staff
   GET_STAFF: "staff",
   GET_STAFF_BY_ID: (id: number) => `staff/${id}`,

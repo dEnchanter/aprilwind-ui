@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/config/rolesColumns.ts
 import { ColumnDef } from '@tanstack/react-table';
+import { Badge } from '@/components/ui/badge';
+import { ShieldCheck } from 'lucide-react';
 
 export const rolesColumns: ColumnDef<Role>[] = [
   {
@@ -44,5 +46,28 @@ export const rolesColumns: ColumnDef<Role>[] = [
     cell: (info: { getValue: () => any }) => (
       <div className="text-sm text-gray-600">{info.getValue()}</div>
     ),
+  },
+  {
+    id: 'permissions',
+    accessorKey: 'permissions',
+    header: 'Permissions',
+    cell: (info: { row: { original: Role }, table: { options: { meta?: { onViewPermissions?: (role: Role) => void } } } }) => {
+      const role = info.row.original;
+      const permissionCount = role.permissions?.length || 0;
+      const onViewPermissions = info.table.options.meta?.onViewPermissions;
+
+      return (
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={permissionCount > 0 ? "default" : "secondary"}
+            className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => onViewPermissions?.(role)}
+          >
+            <ShieldCheck className="h-3 w-3" />
+            <span>{permissionCount} {permissionCount === 1 ? 'permission' : 'permissions'}</span>
+          </Badge>
+        </div>
+      );
+    },
   },
 ];

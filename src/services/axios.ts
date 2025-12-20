@@ -48,11 +48,21 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return Promise.reject(error);
 });
 
-// Response interceptor - Handle 401 errors with token refresh
+// Response interceptor - Handle 401 and 403 errors
 axiosInstance.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // If error is 403 (Forbidden/Permission Denied), redirect to unauthorized page
+    if (error.response?.status === 403) {
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/unauthorized')) {
+        window.location.replace('/unauthorized');
+        // Return a promise that never resolves to prevent error UI
+        return new Promise(() => {});
+      }
+      return Promise.reject(error);
+    }
 
     // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {

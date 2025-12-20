@@ -1,8 +1,8 @@
 import { Endpoint } from '@/services/api';
 import { fetchGet } from '@/services/fetcher';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
-export const useCustomerType = () => {
+export const useCustomerType = (options?: Omit<UseQueryOptions<CustomerType[]>, 'queryKey' | 'queryFn'>) => {
   const fetchCustomerTypes = async () => {
     try {
       // Use the appropriate endpoint from the Endpoint object for fetching customer types
@@ -17,5 +17,6 @@ export const useCustomerType = () => {
   return useQuery({
     queryKey: ['customerTypes'],
     queryFn: fetchCustomerTypes,
+    ...options,
   });
 };

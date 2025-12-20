@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react/no-unescaped-entities */
 "use client"
 
 import { useState } from "react";
@@ -8,7 +6,7 @@ import { Package, Hammer, Activity, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { ProductDefinitionsTable } from "@/components/tables/ProductDefinitionsTable";
 import { ProductForProductionsTable } from "@/components/tables/ProductForProductionsTable";
@@ -174,9 +172,13 @@ export default function ProductionManagementPage() {
         </Card>
       </motion.div>
 
-      {/* Tab Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsContent value="product-definitions" className="mt-0">
+      {/* Tab Content - Conditional rendering to prevent unnecessary API calls */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        {activeTab === "product-definitions" && (
           <ProductDefinitionsTable
             searchTerm={searchTerm}
             onEdit={(productDef) => {
@@ -188,9 +190,9 @@ export default function ProductionManagementPage() {
               setShowProductDefSidebar(true);
             }}
           />
-        </TabsContent>
+        )}
 
-        <TabsContent value="productions" className="mt-0">
+        {activeTab === "productions" && (
           <ProductForProductionsTable
             searchTerm={searchTerm}
             onEdit={(production) => {
@@ -202,9 +204,9 @@ export default function ProductionManagementPage() {
               setShowProductForProductionSidebar(true);
             }}
           />
-        </TabsContent>
+        )}
 
-        <TabsContent value="tracking" className="mt-0">
+        {activeTab === "tracking" && (
           <ProductionsTrackingTable
             searchTerm={searchTerm}
             onView={(production) => {
@@ -212,8 +214,8 @@ export default function ProductionManagementPage() {
               setShowProductionTrackingSidebar(true);
             }}
           />
-        </TabsContent>
-      </Tabs>
+        )}
+      </motion.div>
 
       {/* Product Definition Dialog */}
       <CustomDialog

@@ -100,9 +100,8 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
               <TableHeader>
                 <TableRow className="bg-gray-50 hover:bg-gray-50">
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Email</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Phone</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Address</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Country</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Customer Type</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
@@ -111,9 +110,8 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-28" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-48" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-28" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
@@ -159,9 +157,8 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
               <TableHeader>
                 <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Email</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Phone</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Address</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Country</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Customer Type</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
@@ -175,9 +172,8 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
                     <TableCell className="px-6 py-4">
                       <div className="font-medium text-gray-900">{customer.name}</div>
                     </TableCell>
-                    <TableCell className="px-6 py-4 text-gray-600">{customer.email || 'N/A'}</TableCell>
-                    <TableCell className="px-6 py-4 text-gray-600">{customer.phone || 'N/A'}</TableCell>
                     <TableCell className="px-6 py-4 text-gray-600">{customer.address || 'N/A'}</TableCell>
+                    <TableCell className="px-6 py-4 text-gray-600">{customer.country || 'N/A'}</TableCell>
                     <TableCell className="px-6 py-4">
                       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                         {customer.customerType?.type || 'N/A'}

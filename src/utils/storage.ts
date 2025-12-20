@@ -97,3 +97,32 @@ export const clearUserRoleDetail = (): void => {
     localStorage.removeItem('userRole');
   }
 };
+
+export const saveUserPermissions = (permissions: string[]): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('userPermissions', JSON.stringify(permissions));
+  }
+};
+
+export const getUserPermissions = (): string[] => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
+  const permissionsString = localStorage.getItem('userPermissions');
+  if (permissionsString) {
+    try {
+      return JSON.parse(permissionsString) as string[];
+    } catch (error) {
+      console.error("Error parsing user permissions from local storage:", error);
+      return [];
+    }
+  }
+  return [];
+};
+
+export const clearUserPermissions = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('userPermissions');
+  }
+};

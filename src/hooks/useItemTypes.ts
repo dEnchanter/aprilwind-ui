@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
 import { fetchGet, fetchPost, fetchPatch, fetchDelete } from '@/services/fetcher';
 import { toast } from 'sonner';
@@ -13,7 +13,7 @@ export const itemTypeKeys = {
 };
 
 // Get all item types (including inactive)
-export const useItemTypes = () => {
+export const useItemTypes = (options?: Omit<UseQueryOptions<{ data: any[] }>, 'queryKey' | 'queryFn'>) => {
   return useQuery({
     queryKey: itemTypeKeys.lists(),
     queryFn: async () => {
@@ -21,6 +21,7 @@ export const useItemTypes = () => {
       // Backend returns array directly, wrap it in data property for consistency
       return Array.isArray(response) ? { data: response } : response;
     },
+    ...options,
   });
 };
 

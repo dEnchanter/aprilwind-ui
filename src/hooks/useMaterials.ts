@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
 import { fetchGet, fetchPost, fetchPatch, fetchDelete } from '@/services/fetcher';
 import { toast } from 'sonner';
@@ -20,8 +20,8 @@ export const materialKeys = {
 };
 
 // Get all raw materials
-export const useMaterials = (params?: PaginationParams) => {
-  const { page = 1, limit = 20 } = params || {};
+export const useMaterials = (params?: PaginationParams & Omit<UseQueryOptions<PaginatedResponse<any>>, 'queryKey' | 'queryFn'>) => {
+  const { page = 1, limit = 20, enabled, ...queryOptions } = params || {};
 
   return useQuery({
     queryKey: materialKeys.list({ page, limit }),
@@ -30,6 +30,8 @@ export const useMaterials = (params?: PaginationParams) => {
       const response = await fetchGet<PaginatedResponse<any>>(endpoint);
       return response;
     },
+    enabled,
+    ...queryOptions,
   });
 };
 
@@ -49,35 +51,38 @@ export const useMaterial = (id: number) => {
 };
 
 // Get available materials
-export const useAvailableMaterials = () => {
+export const useAvailableMaterials = (options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>) => {
   return useQuery({
     queryKey: materialKeys.available,
     queryFn: async () => {
       const response = await fetchGet<any>(Endpoint.GET_RAW_ITEMS_AVAILABLE);
       return response;
     },
+    ...options,
   });
 };
 
 // Get materials summary
-export const useMaterialsSummary = () => {
+export const useMaterialsSummary = (options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>) => {
   return useQuery({
     queryKey: materialKeys.summary,
     queryFn: async () => {
       const response = await fetchGet<any>(Endpoint.GET_RAW_ITEMS_SUMMARY);
       return response;
     },
+    ...options,
   });
 };
 
 // Get low stock materials
-export const useLowStockMaterials = () => {
+export const useLowStockMaterials = (options?: Omit<UseQueryOptions<any>, 'queryKey' | 'queryFn'>) => {
   return useQuery({
     queryKey: materialKeys.lowStock(),
     queryFn: async () => {
       const response = await fetchGet<any>(Endpoint.GET_RAW_ITEMS_LOW_STOCK);
       return response;
     },
+    ...options,
   });
 };
 

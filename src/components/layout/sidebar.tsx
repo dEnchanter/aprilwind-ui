@@ -3,34 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import {
-  LayoutDashboard,
-  Package,
-  FileText,
-  Users,
-  Settings,
-  ChevronLeft,
-  Factory,
-  Receipt,
-  Box,
-} from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft } from "lucide-react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-
-const navigation = [
-  { name: "Dashboard", href: "/dashboard-overview", icon: LayoutDashboard },
-  { name: "Items Management", href: "/items-management", icon: Package },
-  { name: "Material Requests", href: "/material-request", icon: FileText },
-  { name: "Production", href: "/production-management", icon: Factory },
-  { name: "Product Stock", href: "/product-stock", icon: Box },
-  { name: "Invoices", href: "/invoice-management", icon: Receipt },
-  { name: "User Management", href: "/user-management", icon: Users },
-  { name: "Configurations", href: "/configurations", icon: Settings },
-];
+import { navigationItems, filterNavigationByRole } from "@/config/navigation";
+import { getUserRoleDetail } from "@/utils/storage";
 
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const role = getUserRoleDetail();
+
+  // Filter navigation items based on user role
+  const visibleNavigation = useMemo(() => {
+    return filterNavigationByRole(navigationItems, role?.name);
+  }, [role?.name]);
 
   return (
     <>
@@ -70,12 +57,12 @@ export function Sidebar() {
         {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-y-1 px-3 py-4">
           <ul role="list" className="flex flex-1 flex-col gap-y-1">
-            {navigation.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href);
+            {visibleNavigation.map((item) => {
+              const isActive = pathname === item.path || pathname.startsWith(item.path);
               return (
-                <li key={item.name}>
+                <li key={item.label}>
                   <Link
-                    href={item.href}
+                    href={item.path}
                     className={cn(
                       "group flex items-center gap-x-3 rounded-lg p-3 text-sm font-medium transition-all",
                       isActive
@@ -88,7 +75,7 @@ export function Sidebar() {
                       isActive ? "text-white" : "text-gray-400 group-hover:text-white"
                     )} />
                     {!collapsed && (
-                      <span className="truncate">{item.name}</span>
+                      <span className="truncate">{item.label}</span>
                     )}
                   </Link>
                 </li>

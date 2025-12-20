@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Menu, Search, ChevronRight, LogOut, User, Settings } from "lucide-react";
+import { Bell, Menu, Search, ChevronRight, LogOut, User, Settings, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -192,9 +192,12 @@ export function Header({ onMenuClick }: HeaderProps) {
                 <span className="text-sm font-semibold text-gray-900">
                   {isLoading ? "Loading..." : user?.staffName || "User"}
                 </span>
-                <span className="text-xs text-gray-500">
-                  {isLoading ? "" : user?.role?.name || ""}
-                </span>
+                <div className="flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3 text-brand-700" />
+                  <span className="text-xs font-medium text-brand-700">
+                    {isLoading ? "" : user?.role?.name || ""}
+                  </span>
+                </div>
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -203,6 +206,12 @@ export function Header({ onMenuClick }: HeaderProps) {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium">{user?.staffName || "User"}</p>
                 <p className="text-xs text-gray-500">{user?.email || ""}</p>
+                <div className="flex items-center gap-1 mt-1">
+                  <ShieldCheck className="h-3 w-3 text-brand-700" />
+                  <span className="text-xs font-medium text-brand-700">
+                    {user?.role?.name || ""}
+                  </span>
+                </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

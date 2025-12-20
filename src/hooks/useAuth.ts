@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
 import { fetchPost, fetchGet, fetchPatch } from '@/services/fetcher';
-import { saveAccessToken, saveRefreshToken, saveUserData, saveUserRoleDetail, clearAccessToken, clearRefreshToken, clearUserData, clearUserRoleDetail, getAccessToken } from '@/utils/storage';
+import { saveAccessToken, saveRefreshToken, saveUserData, saveUserRoleDetail, saveUserPermissions, clearAccessToken, clearRefreshToken, clearUserData, clearUserRoleDetail, clearUserPermissions, getAccessToken } from '@/utils/storage';
 import { toast } from 'sonner';
 
 // Types for authentication
@@ -25,6 +25,7 @@ export interface LoginResponse {
       name: string;
       description: string;
     };
+    permissions: string[];
   };
 }
 
@@ -77,6 +78,9 @@ export const useLogin = () => {
 
       // Store role details
       saveUserRoleDetail(data.user.role as any);
+
+      // Store user permissions
+      saveUserPermissions(data.user.permissions || []);
 
       toast.success('Login successful');
     },
@@ -278,6 +282,7 @@ export const useLogout = () => {
       clearRefreshToken();
       clearUserData();
       clearUserRoleDetail();
+      clearUserPermissions();
 
       // Clear all queries
       queryClient.clear();

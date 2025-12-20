@@ -22,14 +22,15 @@ const Page = () => {
   const [staffDialogOpen, setStaffDialogOpen] = useState(false);
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
 
-  // Fetch data
-  const { data: staffResponse, isLoading: staffLoading } = useStaff({ page: 1, limit: 100 });
-  const { data: customersResponse, isLoading: customersLoading } = useCustomers({ page: 1, limit: 100 });
+  // Fetch data only for the active tab to avoid permission errors
+  const { data: staffResponse, isLoading: staffLoading } = useStaff({ page: 1, limit: 100, enabled: activeTab === 'staff' });
+  const { data: customersResponse, isLoading: customersLoading } = useCustomers({ page: 1, limit: 100, enabled: activeTab === 'customers' });
 
   const staffData = staffResponse?.data || [];
   const customersData = customersResponse?.data || [];
 
-  const isLoading = staffLoading || customersLoading;
+  // Only show loading for the active tab
+  const isLoading = (activeTab === 'staff' && staffLoading) || (activeTab === 'customers' && customersLoading);
 
   // Calculate statistics
   const stats = useMemo(() => {

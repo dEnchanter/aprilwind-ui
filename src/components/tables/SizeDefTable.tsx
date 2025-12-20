@@ -1,4 +1,5 @@
-"use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
 
 import { useState } from "react";
 import {
@@ -17,6 +18,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,7 +35,8 @@ import {
   MoreHorizontal,
   Eye,
   Edit,
-  Users,
+  Trash2,
+  Ruler,
 } from "lucide-react";
 import {
   Sheet,
@@ -33,43 +45,66 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { useCustomerType } from "@/hooks/useCustomerType";
+import { useSizeDefs, useDeleteSizeDef } from "@/hooks/useSizeDefs";
+import { SizeDef } from "@/types/size-def";
 import CustomDialog from "../dialog/CustomDialog";
-import CustomerTypeForm from "../forms/CustomerTypeForm";
+import SizeDefForm from "../forms/SizeDefForm";
+import { formatDate } from "@/lib/utils";
 
-interface CustomerTypeTableProps {
+interface SizeDefTableProps {
   hideAddButton?: boolean;
 }
 
-const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) => {
-  const { data: customerTypes, isLoading, isError, refetch } = useCustomerType();
+const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
+  const { data: sizeDefsResponse, isLoading, isError, refetch } = useSizeDefs();
+  const deleteMutation = useDeleteSizeDef();
 
   const [open, setOpen] = useState(false);
-  const [editCustomerType, setEditCustomerType] = useState<Partial<CustomerType> | undefined>(undefined);
+  const [editSizeDef, setEditSizeDef] = useState<SizeDef | undefined>(undefined);
   const [viewSidebarOpen, setViewSidebarOpen] = useState(false);
-  const [viewCustomerType, setViewCustomerType] = useState<CustomerType | null>(null);
+  const [viewSizeDef, setViewSizeDef] = useState<SizeDef | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sizeDefToDelete, setSizeDefToDelete] = useState<SizeDef | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  const sizeDefs = sizeDefsResponse?.data || [];
 
   const toggleDialog = () => {
     setOpen(!open);
     if (open) {
-      setEditCustomerType(undefined);
+      setEditSizeDef(undefined);
     }
   };
 
-  const handleView = (customerType: CustomerType) => {
-    setViewCustomerType(customerType);
+  const handleView = (sizeDef: SizeDef) => {
+    setViewSizeDef(sizeDef);
     setViewSidebarOpen(true);
   };
 
-  const handleEdit = (customerType: CustomerType) => {
-    setEditCustomerType(customerType);
+  const handleEdit = (sizeDef: SizeDef) => {
+    setEditSizeDef(sizeDef);
     setOpen(true);
   };
 
-  const totalPages = Math.ceil((customerTypes?.length || 0) / limit);
-  const paginatedData = customerTypes?.slice((page - 1) * limit, page * limit) || [];
+  const handleDeleteClick = (sizeDef: SizeDef) => {
+    setSizeDefToDelete(sizeDef);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (sizeDefToDelete) {
+      deleteMutation.mutate(sizeDefToDelete.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setSizeDefToDelete(null);
+        },
+      });
+    }
+  };
+
+  const totalPages = Math.ceil((sizeDefs?.length || 0) / limit);
+  const paginatedData = sizeDefs?.slice((page - 1) * limit, page * limit) || [];
 
   if (isLoading) {
     return (
@@ -79,7 +114,8 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-50 hover:bg-gray-50">
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Customer Type</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Description</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -87,6 +123,7 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-32" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-6 w-48" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))}
@@ -103,11 +140,11 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
       <div className="rounded-xl border-2 border-dashed border-red-300 bg-red-50/50 p-12">
         <div className="flex flex-col items-center justify-center text-center">
           <div className="rounded-full bg-red-100 p-6 mb-4">
-            <Users className="h-12 w-12 text-red-400" />
+            <Ruler className="h-12 w-12 text-red-400" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load customer types</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load size definitions</h3>
           <p className="text-sm text-gray-500 mb-6 max-w-md">
-            There was an error loading the customer types. Please try again.
+            There was an error loading the size definitions. Please try again.
           </p>
           <Button
             onClick={() => refetch()}
@@ -120,33 +157,33 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
     );
   }
 
-  if (!customerTypes || customerTypes.length === 0) {
+  if (!sizeDefs || sizeDefs.length === 0) {
     return (
       <>
         <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/50 p-12">
           <div className="flex flex-col items-center justify-center text-center">
             <div className="rounded-full bg-gray-100 p-6 mb-4">
-              <Users className="h-12 w-12 text-gray-400" />
+              <Ruler className="h-12 w-12 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No customer types found</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No size definitions found</h3>
             <p className="text-sm text-gray-500 mb-6 max-w-md">
-              Get started by creating your first customer type to categorize your customers.
+              Get started by creating your first size definition to use across your products.
             </p>
             {!hideAddButton && (
               <Button
                 onClick={toggleDialog}
                 className="bg-gradient-to-r from-brand-600 to-brand-700 text-white hover:from-brand-700 hover:to-brand-800"
               >
-                Create Customer Type
+                Create Size Definition
               </Button>
             )}
           </div>
         </div>
 
-        {/* Dialog for Creating Customer Type */}
+        {/* Dialog for Creating Size */}
         {!hideAddButton && (
-          <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[450px]">
-            <CustomerTypeForm closeDialog={toggleDialog} initialValues={editCustomerType} />
+          <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[500px]">
+            <SizeDefForm closeDialog={toggleDialog} initialValues={editSizeDef} />
           </CustomDialog>
         )}
       </>
@@ -160,23 +197,26 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
-                <TableHead className="px-6 py-4 font-semibold text-gray-700">Customer Type</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700">Description</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.map((customerType) => (
+              {paginatedData.map((sizeDef) => (
                 <TableRow
-                  key={customerType.id}
+                  key={sizeDef.id}
                   className="hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
                 >
                   <TableCell className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50">
-                        <Users className="h-3 w-3 mr-1" />
-                        {customerType.type}
-                      </Badge>
-                    </div>
+                    <span className="text-sm font-medium text-gray-900">
+                      {sizeDef.name || "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <span className="text-sm text-gray-600">
+                      {sizeDef.description || "No description"}
+                    </span>
                   </TableCell>
                   <TableCell className="px-6 py-4 text-right">
                     <DropdownMenu>
@@ -192,7 +232,7 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleView(customerType)}
+                          onClick={() => handleView(sizeDef)}
                           className="cursor-pointer"
                         >
                           <Eye className="mr-2 h-4 w-4 text-gray-500" />
@@ -200,11 +240,18 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          onClick={() => handleEdit(customerType)}
+                          onClick={() => handleEdit(sizeDef)}
                           className="cursor-pointer"
                         >
                           <Edit className="mr-2 h-4 w-4 text-gray-500" />
                           Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteClick(sizeDef)}
+                          className="cursor-pointer text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -217,18 +264,18 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
       </div>
 
       {/* Pagination */}
-      {customerTypes && customerTypes.length > 0 && (
+      {sizeDefs && sizeDefs.length > 0 && (
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4 px-2 mt-4 pt-4 border-t border-gray-200">
           {/* Left side - Items info and limit selector */}
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <p className="text-sm text-gray-600">
               Showing <span className="font-medium">{paginatedData.length}</span>
-              {customerTypes.length > paginatedData.length && (
+              {sizeDefs.length > paginatedData.length && (
                 <>
-                  {" "}of <span className="font-medium">{customerTypes.length}</span>
+                  {" "}of <span className="font-medium">{sizeDefs.length}</span>
                 </>
               )}{" "}
-              customer types
+              size definitions
               {totalPages > 1 && (
                 <>
                   {" "}· Page <span className="font-medium">{page}</span> of{" "}
@@ -239,11 +286,11 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
 
             {/* Items per page selector */}
             <div className="flex items-center gap-2">
-              <label htmlFor="limit-select-customer-types" className="text-sm text-gray-600 whitespace-nowrap">
+              <label htmlFor="limit-select-size-defs" className="text-sm text-gray-600 whitespace-nowrap">
                 Items per page:
               </label>
               <select
-                id="limit-select-customer-types"
+                id="limit-select-size-defs"
                 value={limit}
                 onChange={(e) => {
                   setLimit(Number(e.target.value));
@@ -288,50 +335,99 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
       <Sheet open={viewSidebarOpen} onOpenChange={setViewSidebarOpen}>
         <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Customer Type Details</SheetTitle>
+            <SheetTitle>Size Definition Details</SheetTitle>
             <SheetDescription>
-              View detailed information about this customer type
+              View detailed information about this size definition
             </SheetDescription>
           </SheetHeader>
 
-          {viewCustomerType ? (
+          {viewSizeDef ? (
             <div className="mt-6 space-y-6">
-              {/* Customer Type Information */}
+              {/* Size Information */}
               <div className="space-y-3">
                 <h3 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Customer Type Information
+                  <Ruler className="h-4 w-4" />
+                  Size Information
                 </h3>
                 <div className="space-y-2 pl-6">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">ID:</span>
-                    <span className="font-medium">#{viewCustomerType.id}</span>
+                    <span className="font-medium">#{viewSizeDef.id}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Type:</span>
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200">
-                      {viewCustomerType.type}
+                    <span className="text-gray-600">Size:</span>
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-semibold">
+                      {viewSizeDef.size}
                     </Badge>
                   </div>
+                  {viewSizeDef.name && (
+                    <div className="flex flex-col gap-1 text-sm">
+                      <span className="text-gray-600">Name:</span>
+                      <span className="font-medium text-gray-900">{viewSizeDef.name}</span>
+                    </div>
+                  )}
+                  {viewSizeDef.description && (
+                    <div className="flex flex-col gap-1 text-sm">
+                      <span className="text-gray-600">Description:</span>
+                      <span className="font-medium text-gray-900">{viewSizeDef.description}</span>
+                    </div>
+                  )}
+                  {viewSizeDef.createdAt && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Created:</span>
+                      <span className="font-medium">{formatDate(viewSizeDef.createdAt)}</span>
+                    </div>
+                  )}
+                  {viewSizeDef.updatedAt && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Updated:</span>
+                      <span className="font-medium">{formatDate(viewSizeDef.updatedAt)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ) : (
             <div className="flex justify-center items-center min-h-[400px] text-gray-500">
-              No customer type selected
+              No size definition selected
             </div>
           )}
         </SheetContent>
       </Sheet>
 
-      {/* Dialog for Editing Customer Type */}
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Size Definition</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete size{" "}
+              <span className="font-semibold">{sizeDefToDelete?.size}</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSizeDefToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog for Editing Size */}
       {!hideAddButton && (
-        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[450px]">
-          <CustomerTypeForm closeDialog={toggleDialog} initialValues={editCustomerType} />
+        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[500px]">
+          <SizeDefForm closeDialog={toggleDialog} initialValues={editSizeDef} />
         </CustomDialog>
       )}
     </>
   );
 };
 
-export default CustomerTypeTable;
+export default SizeDefTable;

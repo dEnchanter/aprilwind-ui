@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
 import { fetchGet, fetchPost, fetchPatch, fetchDelete } from '@/services/fetcher';
 import { toast } from 'sonner';
@@ -15,8 +15,8 @@ export const customerKeys = {
 };
 
 // Get all customers
-export const useCustomers = (params?: PaginationParams) => {
-  const { page = 1, limit = 20 } = params || {};
+export const useCustomers = (params?: PaginationParams & Omit<UseQueryOptions<PaginatedResponse<any>>, 'queryKey' | 'queryFn'>) => {
+  const { page = 1, limit = 20, enabled, ...queryOptions } = params || {};
 
   return useQuery({
     queryKey: customerKeys.list({ page, limit }),
@@ -25,6 +25,8 @@ export const useCustomers = (params?: PaginationParams) => {
       const response = await fetchGet<PaginatedResponse<any>>(endpoint);
       return response;
     },
+    enabled,
+    ...queryOptions,
   });
 };
 

@@ -7,10 +7,12 @@ import { motion } from "framer-motion";
 import RoleTable from "@/components/tables/RoleTable";
 import ItemTypeTable from "@/components/tables/ItemTypeTable";
 import CustomerTypeTable from "@/components/tables/CustomerTypeTable";
+import SizeDefTable from "@/components/tables/SizeDefTable";
 import { useRoles } from "@/hooks/useRole";
 import { useItemTypes } from "@/hooks/useItemTypes";
 import { useCustomerType } from "@/hooks/useCustomerType";
-import { Settings, Shield, Tags, Users, Plus } from "lucide-react";
+import { useSizeDefs } from "@/hooks/useSizeDefs";
+import { Settings, Shield, Tags, Users, Ruler, Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,27 +21,35 @@ import CustomDialog from "@/components/dialog/CustomDialog";
 import RoleForm from "@/components/forms/RoleForm";
 import ItemTypeForm from "@/components/forms/ItemTypeForm";
 import CustomerTypeForm from "@/components/forms/CustomerTypeForm";
+import SizeDefForm from "@/components/forms/SizeDefForm";
 
 const Page = () => {
-  const [activeTab, setActiveTab] = useState<'roles' | 'itemTypes' | 'customerTypes'>('roles');
+  const [activeTab, setActiveTab] = useState<'roles' | 'itemTypes' | 'customerTypes' | 'sizeDefs'>('roles');
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [itemTypeDialogOpen, setItemTypeDialogOpen] = useState(false);
   const [customerTypeDialogOpen, setCustomerTypeDialogOpen] = useState(false);
+  const [sizeDefDialogOpen, setSizeDefDialogOpen] = useState(false);
 
-  // Fetch data
-  const { data: rolesResponse, isLoading: rolesLoading } = useRoles();
-  const { data: itemTypesResponse, isLoading: itemTypesLoading } = useItemTypes();
-  const { data: customerTypesResponse, isLoading: customerTypesLoading } = useCustomerType();
+  // Fetch data only for the active tab to avoid permission errors
+  const { data: rolesResponse, isLoading: rolesLoading } = useRoles({ enabled: activeTab === 'roles' });
+  const { data: itemTypesResponse, isLoading: itemTypesLoading } = useItemTypes({ enabled: activeTab === 'itemTypes' });
+  const { data: customerTypesResponse, isLoading: customerTypesLoading } = useCustomerType({ enabled: activeTab === 'customerTypes' });
+  const { data: sizeDefsResponse, isLoading: sizeDefsLoading } = useSizeDefs({ enabled: activeTab === 'sizeDefs' });
 
   const rolesData = rolesResponse?.data || [];
   const itemTypesData = itemTypesResponse?.data || [];
   const customerTypesData = customerTypesResponse || [];
+  const sizeDefsData = sizeDefsResponse?.data || [];
 
-  const isLoading = rolesLoading || itemTypesLoading || customerTypesLoading;
+  // Only show loading for the active tab
+  const isLoading = (activeTab === 'roles' && rolesLoading) ||
+                    (activeTab === 'itemTypes' && itemTypesLoading) ||
+                    (activeTab === 'customerTypes' && customerTypesLoading) ||
+                    (activeTab === 'sizeDefs' && sizeDefsLoading);
 
-  // Calculate statistics
+  // Calculate statistics (only for fetched data)
   const stats = useMemo(() => {
-    const totalConfigs = rolesData.length + itemTypesData.length + customerTypesData.length;
+    const totalConfigs = rolesData.length + itemTypesData.length + customerTypesData.length + sizeDefsData.length;
 
     return [
       {
@@ -70,8 +80,15 @@ const Page = () => {
         bgColor: "bg-amber-50",
         iconColor: "text-amber-600",
       },
+      {
+        title: "Size Definitions",
+        value: sizeDefsData.length,
+        icon: Ruler,
+        bgColor: "bg-indigo-50",
+        iconColor: "text-indigo-600",
+      },
     ];
-  }, [rolesData, itemTypesData, customerTypesData]);
+  }, [rolesData, itemTypesData, customerTypesData, sizeDefsData]);
 
   const getAddButtonText = () => {
     switch (activeTab) {
@@ -81,6 +98,8 @@ const Page = () => {
         return 'Add Item Type';
       case 'customerTypes':
         return 'Add Customer Type';
+      case 'sizeDefs':
+        return 'Add Size Definition';
     }
   };
 
@@ -94,6 +113,9 @@ const Page = () => {
         break;
       case 'customerTypes':
         setCustomerTypeDialogOpen(true);
+        break;
+      case 'sizeDefs':
+        setSizeDefDialogOpen(true);
         break;
     }
   };
@@ -123,7 +145,7 @@ const Page = () => {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -180,7 +202,7 @@ const Page = () => {
                 onValueChange={(value: any) => setActiveTab(value)}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm">
+                <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm">
                   <TabsTrigger
                     value="roles"
                     className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
@@ -223,6 +245,20 @@ const Page = () => {
                       )}
                     </div>
                   </TabsTrigger>
+                  <TabsTrigger
+                    value="sizeDefs"
+                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
+                  >
+                    <Ruler className="h-4 w-4" />
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-xs sm:text-sm">Size Definitions</span>
+                      {!isLoading && (
+                        <span className="text-[10px] sm:text-xs opacity-80">
+                          {sizeDefsData.length} sizes
+                        </span>
+                      )}
+                    </div>
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -239,6 +275,7 @@ const Page = () => {
         {activeTab === 'roles' && <RoleTable hideAddButton />}
         {activeTab === 'itemTypes' && <ItemTypeTable hideAddButton />}
         {activeTab === 'customerTypes' && <CustomerTypeTable hideAddButton />}
+        {activeTab === 'sizeDefs' && <SizeDefTable hideAddButton />}
       </motion.div>
 
       {/* Role Dialog */}
@@ -254,6 +291,11 @@ const Page = () => {
       {/* Customer Type Dialog */}
       <CustomDialog open={customerTypeDialogOpen} toggleOpen={() => setCustomerTypeDialogOpen(!customerTypeDialogOpen)} dialogWidth="sm:max-w-[700px]">
         <CustomerTypeForm closeDialog={() => setCustomerTypeDialogOpen(false)} />
+      </CustomDialog>
+
+      {/* Size Definition Dialog */}
+      <CustomDialog open={sizeDefDialogOpen} toggleOpen={() => setSizeDefDialogOpen(!sizeDefDialogOpen)} dialogWidth="sm:max-w-[500px]">
+        <SizeDefForm closeDialog={() => setSizeDefDialogOpen(false)} />
       </CustomDialog>
     </div>
   );

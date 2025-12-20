@@ -27,10 +27,21 @@ export default function ItemsManagementPage() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [limit, setLimit] = useState(20);
 
-  const { data: allMaterials, isLoading: allLoading } = useMaterials({ page, limit });
-  const { data: availableMaterials, isLoading: availableLoading } = useAvailableMaterials();
-  const { data: lowStockMaterials, isLoading: lowStockLoading } = useLowStockMaterials();
-  const { data: summary, isLoading: summaryLoading } = useMaterialsSummary();
+  // Only fetch materials data when on materials tab
+  const { data: allMaterials, isLoading: allLoading } = useMaterials({
+    page,
+    limit,
+    enabled: mainTab === "materials" && filterTab === "all"
+  });
+  const { data: availableMaterials, isLoading: availableLoading } = useAvailableMaterials({
+    enabled: mainTab === "materials" && filterTab === "available"
+  });
+  const { data: lowStockMaterials, isLoading: lowStockLoading } = useLowStockMaterials({
+    enabled: mainTab === "materials" && filterTab === "low-stock"
+  });
+  const { data: summary, isLoading: summaryLoading } = useMaterialsSummary({
+    enabled: mainTab === "materials"
+  });
 
   // Listen for custom event to open add dialog
   useEffect(() => {
@@ -165,9 +176,11 @@ export default function ItemsManagementPage() {
               <span>Item Types</span>
             </TabsTrigger>
           </TabsList>
+        </Tabs>
 
-          {/* Materials Tab Content */}
-          <TabsContent value="materials" className="space-y-6 mt-6">
+        {/* Conditional Tab Content - Only render active tab */}
+        {mainTab === "materials" && (
+          <div className="space-y-6 mt-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {stats.map((stat, index) => {
@@ -307,10 +320,11 @@ export default function ItemsManagementPage() {
               onPageChange={setPage}
               onLimitChange={setLimit}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          {/* Item Types Tab Content */}
-          <TabsContent value="item-types" className="space-y-6 mt-6">
+        {mainTab === "item-types" && (
+          <div className="space-y-6 mt-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -335,8 +349,8 @@ export default function ItemsManagementPage() {
               </Card>
               <ItemTypeTable />
             </motion.div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </motion.div>
 
       {/* Add Material Dialog */}
