@@ -56,6 +56,11 @@ axiosInstance.interceptors.response.use(
 
     // If error is 403 (Forbidden/Permission Denied), redirect to unauthorized page
     if (error.response?.status === 403) {
+      // Skip 403 redirect for logout endpoint
+      if (originalRequest.url?.includes('/auth/logout')) {
+        return Promise.reject(error);
+      }
+
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/unauthorized')) {
         window.location.replace('/unauthorized');
         // Return a promise that never resolves to prevent error UI
@@ -66,8 +71,8 @@ axiosInstance.interceptors.response.use(
 
     // If error is 401 and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Skip refresh for login and refresh endpoints
-      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+      // Skip refresh for login, logout, and refresh endpoints
+      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/logout') || originalRequest.url?.includes('/auth/refresh')) {
         return Promise.reject(error);
       }
 

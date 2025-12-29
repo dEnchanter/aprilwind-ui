@@ -17,6 +17,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +35,7 @@ import {
   Eye,
   Edit,
   Users,
+  Trash2,
 } from "lucide-react";
 import {
   Sheet,
@@ -33,7 +44,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { useCustomerType } from "@/hooks/useCustomerType";
+import { useCustomerType, useDeleteCustomerType } from "@/hooks/useCustomerType";
 import CustomDialog from "../dialog/CustomDialog";
 import CustomerTypeForm from "../forms/CustomerTypeForm";
 
@@ -43,11 +54,13 @@ interface CustomerTypeTableProps {
 
 const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) => {
   const { data: customerTypes, isLoading, isError, refetch } = useCustomerType();
+  const deleteCustomerTypeMutation = useDeleteCustomerType();
 
   const [open, setOpen] = useState(false);
   const [editCustomerType, setEditCustomerType] = useState<Partial<CustomerType> | undefined>(undefined);
   const [viewSidebarOpen, setViewSidebarOpen] = useState(false);
   const [viewCustomerType, setViewCustomerType] = useState<CustomerType | null>(null);
+  const [deleteCustomerType, setDeleteCustomerType] = useState<CustomerType | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -66,6 +79,20 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
   const handleEdit = (customerType: CustomerType) => {
     setEditCustomerType(customerType);
     setOpen(true);
+  };
+
+  const handleDelete = (customerType: CustomerType) => {
+    setDeleteCustomerType(customerType);
+  };
+
+  const confirmDelete = () => {
+    if (deleteCustomerType?.id) {
+      deleteCustomerTypeMutation.mutate(deleteCustomerType.id, {
+        onSuccess: () => {
+          setDeleteCustomerType(null);
+        },
+      });
+    }
   };
 
   const totalPages = Math.ceil((customerTypes?.length || 0) / limit);
@@ -206,6 +233,14 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
                           <Edit className="mr-2 h-4 w-4 text-gray-500" />
                           Edit
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(customerType)}
+                          className="cursor-pointer text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -325,11 +360,31 @@ const CustomerTypeTable = ({ hideAddButton = false }: CustomerTypeTableProps) =>
       </Sheet>
 
       {/* Dialog for Editing Customer Type */}
-      {!hideAddButton && (
-        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[450px]">
-          <CustomerTypeForm closeDialog={toggleDialog} initialValues={editCustomerType} />
-        </CustomDialog>
-      )}
+      <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
+        <CustomerTypeForm closeDialog={toggleDialog} initialValues={editCustomerType} />
+      </CustomDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteCustomerType} onOpenChange={() => setDeleteCustomerType(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Customer Type</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the customer type &ldquo;{deleteCustomerType?.type}&ldquo;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteCustomerTypeMutation.isPending}
+            >
+              {deleteCustomerTypeMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

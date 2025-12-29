@@ -116,6 +116,7 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
                 <TableRow className="bg-gray-50 hover:bg-gray-50">
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Description</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Gender Type</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -124,6 +125,7 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
                   <TableRow key={i}>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-32" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-48" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))}
@@ -199,6 +201,7 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
               <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
                 <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700">Description</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700">Gender Type</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -215,8 +218,20 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <span className="text-sm text-gray-600">
-                      {sizeDef.description || "No description"}
+                      {sizeDef.description}
                     </span>
+                  </TableCell>
+                  <TableCell className="px-6 py-4">
+                    <Badge
+                      variant="outline"
+                      className={
+                        sizeDef.genderType === "male"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-pink-50 text-pink-700 border-pink-200"
+                      }
+                    >
+                      {sizeDef.genderType.charAt(0).toUpperCase() + sizeDef.genderType.slice(1)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="px-6 py-4 text-right">
                     <DropdownMenu>
@@ -354,24 +369,27 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
                     <span className="text-gray-600">ID:</span>
                     <span className="font-medium">#{viewSizeDef.id}</span>
                   </div>
+                  <div className="flex flex-col gap-1 text-sm">
+                    <span className="text-gray-600">Name:</span>
+                    <span className="font-medium text-gray-900">{viewSizeDef.name}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 text-sm">
+                    <span className="text-gray-600">Description:</span>
+                    <span className="font-medium text-gray-900">{viewSizeDef.description}</span>
+                  </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Size:</span>
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 font-semibold">
-                      {viewSizeDef.size}
+                    <span className="text-gray-600">Gender Type:</span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        viewSizeDef.genderType === "male"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-pink-50 text-pink-700 border-pink-200"
+                      }
+                    >
+                      {viewSizeDef.genderType.charAt(0).toUpperCase() + viewSizeDef.genderType.slice(1)}
                     </Badge>
                   </div>
-                  {viewSizeDef.name && (
-                    <div className="flex flex-col gap-1 text-sm">
-                      <span className="text-gray-600">Name:</span>
-                      <span className="font-medium text-gray-900">{viewSizeDef.name}</span>
-                    </div>
-                  )}
-                  {viewSizeDef.description && (
-                    <div className="flex flex-col gap-1 text-sm">
-                      <span className="text-gray-600">Description:</span>
-                      <span className="font-medium text-gray-900">{viewSizeDef.description}</span>
-                    </div>
-                  )}
                   {viewSizeDef.createdAt && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Created:</span>
@@ -401,8 +419,8 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Size Definition</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete size{" "}
-              <span className="font-semibold">{sizeDefToDelete?.size}</span>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{sizeDefToDelete?.name}</span>? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -421,11 +439,9 @@ const SizeDefTable = ({ hideAddButton = false }: SizeDefTableProps) => {
       </AlertDialog>
 
       {/* Dialog for Editing Size */}
-      {!hideAddButton && (
-        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[500px]">
-          <SizeDefForm closeDialog={toggleDialog} initialValues={editSizeDef} />
-        </CustomDialog>
-      )}
+      <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[500px]">
+        <SizeDefForm closeDialog={toggleDialog} initialValues={editSizeDef} />
+      </CustomDialog>
     </>
   );
 };

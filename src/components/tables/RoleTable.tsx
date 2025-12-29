@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from 'react';
-import { useRoles } from '@/hooks/useRole';
+import { useRoles, useDeleteRole } from '@/hooks/useRoles';
 import { Button } from '../ui/button';
 import { Skeleton } from '../ui/skeleton';
 import {
@@ -22,10 +22,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   MoreHorizontal,
   Edit,
   Shield,
   ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import CustomDialog from '../dialog/CustomDialog';
 import RoleForm from '../forms/RoleForm';
@@ -39,11 +50,13 @@ interface RoleTableProps {
 const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
   const { data: rolesResponse, isLoading } = useRoles();
   const roles = rolesResponse?.data || [];
+  const deleteRoleMutation = useDeleteRole();
 
   const [open, setOpen] = useState(false);
   const [editRole, setEditRole] = useState<Partial<Role> | undefined>(undefined);
   const [permissionsDialogOpen, setPermissionsDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [deleteRole, setDeleteRole] = useState<Role | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -62,6 +75,20 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
   const handleViewPermissions = (role: Role) => {
     setSelectedRole(role);
     setPermissionsDialogOpen(true);
+  };
+
+  const handleDelete = (role: Role) => {
+    setDeleteRole(role);
+  };
+
+  const confirmDelete = () => {
+    if (deleteRole?.id) {
+      deleteRoleMutation.mutate(deleteRole.id, {
+        onSuccess: () => {
+          setDeleteRole(null);
+        },
+      });
+    }
   };
 
   const totalPages = Math.ceil(roles.length / limit);
@@ -194,6 +221,14 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
                             <ShieldCheck className="mr-2 h-4 w-4" />
                             Manage Permissions
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(role)}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Role
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -251,11 +286,9 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
       </div>
 
       {/* Edit Dialog */}
-      {!hideAddButton && (
-        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[450px]">
-          <RoleForm closeDialog={toggleDialog} initialValues={editRole} />
-        </CustomDialog>
-      )}
+      <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
+        <RoleForm closeDialog={toggleDialog} initialValues={editRole} />
+      </CustomDialog>
 
       {/* Permissions Dialog */}
       <RolePermissionsDialog
@@ -266,6 +299,28 @@ const RoleTable = ({ hideAddButton = false }: RoleTableProps) => {
           setSelectedRole(null);
         }}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteRole} onOpenChange={() => setDeleteRole(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Role</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the role "{deleteRole?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteRoleMutation.isPending}
+            >
+              {deleteRoleMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

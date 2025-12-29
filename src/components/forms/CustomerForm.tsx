@@ -29,7 +29,7 @@ const CustomerForm = ({ className, closeDialog, initialValues }: CustomerFormPro
     defaultValues: {
       name: initialValues?.name || "",
       address: initialValues?.address || "",
-      country: initialValues?.country || "",
+      country: initialValues?.country || "Nigeria",
       customerType: initialValues?.customerType || { id: 0, type: "" },
     },
   });
@@ -107,7 +107,37 @@ const CustomerForm = ({ className, closeDialog, initialValues }: CustomerFormPro
                 <div>
                   <Label className="text-xs">Country</Label>
                   <FormControl className={field.value ? 'font-medium' : 'border-gray-300'}>
-                    <Input placeholder="Country" {...field} />
+                    <Select
+                      value={field.value || undefined}
+                      onValueChange={field.onChange}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Nigeria">Nigeria</SelectItem>
+                        <SelectItem value="Ghana">Ghana</SelectItem>
+                        <SelectItem value="South Africa">South Africa</SelectItem>
+                        <SelectItem value="Kenya">Kenya</SelectItem>
+                        <SelectItem value="Egypt">Egypt</SelectItem>
+                        <SelectItem value="Morocco">Morocco</SelectItem>
+                        <SelectItem value="Tanzania">Tanzania</SelectItem>
+                        <SelectItem value="Uganda">Uganda</SelectItem>
+                        <SelectItem value="Ethiopia">Ethiopia</SelectItem>
+                        <SelectItem value="Cameroon">Cameroon</SelectItem>
+                        <SelectItem value="Ivory Coast">Ivory Coast</SelectItem>
+                        <SelectItem value="Senegal">Senegal</SelectItem>
+                        <SelectItem value="Rwanda">Rwanda</SelectItem>
+                        <SelectItem value="Zambia">Zambia</SelectItem>
+                        <SelectItem value="Zimbabwe">Zimbabwe</SelectItem>
+                        <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+                        <SelectItem value="United States">United States</SelectItem>
+                        <SelectItem value="Canada">Canada</SelectItem>
+                        <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   {error && <FormMessage className="text-[#DC3E42] text-xs p-1">{error.message}</FormMessage>}
                 </div>
@@ -122,8 +152,8 @@ const CustomerForm = ({ className, closeDialog, initialValues }: CustomerFormPro
                 <div>
                   <Label className="text-xs">Customer Type</Label>
                   <FormControl className={field.value ? 'font-medium' : 'border-gray-300'}>
-                    <Select 
-                      value={String(field.value)} 
+                    <Select
+                      value={field.value && field.value > 0 ? String(field.value) : undefined}
                       onValueChange={(value) => field.onChange(Number(value))}
                       disabled={isLoading}  // Disable the select while loading
                     >

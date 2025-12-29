@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { navigationItems, filterNavigationByRole } from "@/config/navigation";
 import { getUserRoleDetail } from "@/utils/storage";
@@ -12,7 +12,12 @@ import { getUserRoleDetail } from "@/utils/storage";
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const role = getUserRoleDetail();
+  const [role, setRole] = useState<any>(null);
+
+  // Get user role only on client side to avoid hydration mismatch
+  useEffect(() => {
+    setRole(getUserRoleDetail());
+  }, []);
 
   // Filter navigation items based on user role
   const visibleNavigation = useMemo(() => {
@@ -55,10 +60,10 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-y-1 px-3 py-4">
+        <nav className="flex flex-1 flex-col gap-y-1 px-3 py-4 overflow-y-auto">
           <ul role="list" className="flex flex-1 flex-col gap-y-1">
             {visibleNavigation.map((item) => {
-              const isActive = pathname === item.path || pathname.startsWith(item.path);
+              const isActive = pathname ? (pathname === item.path || pathname.startsWith(item.path)) : false;
               return (
                 <li key={item.label}>
                   <Link

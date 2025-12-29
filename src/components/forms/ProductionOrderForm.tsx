@@ -21,9 +21,15 @@ import {
 import { useCreateProductionOrder } from "@/hooks/useProductionOrders";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useSizeDefs } from "@/hooks/useSizeDefs";
 import { Loader2, Plus, Trash2, Package } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 interface ProductionOrderFormProps {
   closeDialog: () => void;
@@ -40,6 +46,8 @@ export default function ProductionOrderForm({
     limit: 100,
   });
   const customers = customersResponse?.data || [];
+  const { data: sizeDefsResponse, isLoading: sizeDefsLoading } = useSizeDefs();
+  const sizeDefs = sizeDefsResponse?.data || [];
 
   const createOrderMutation = useCreateProductionOrder();
 
@@ -97,14 +105,14 @@ export default function ProductionOrderForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
+      <DialogHeader>
+        <DialogTitle>
           {initialValues ? "Edit Production Order" : "Create Production Order"}
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">
+        </DialogTitle>
+        <DialogDescription>
           Create a custom production order from a customer request
-        </p>
-      </div>
+        </DialogDescription>
+      </DialogHeader>
 
       <Separator />
 
@@ -219,12 +227,37 @@ export default function ProductionOrderForm({
                     <Label htmlFor={`orderDetails.${index}.size`}>
                       Size <span className="text-red-500">*</span>
                     </Label>
-                    <Input
-                      id={`orderDetails.${index}.size`}
-                      type="number"
-                      placeholder="e.g., 42"
-                      {...register(`orderDetails.${index}.size`)}
-                    />
+                    <Select
+                      value={watch(`orderDetails.${index}.size`) && watch(`orderDetails.${index}.size`) > 0
+                        ? watch(`orderDetails.${index}.size`).toString()
+                        : undefined}
+                      onValueChange={(value) => setValue(`orderDetails.${index}.size`, parseInt(value))}
+                      disabled={sizeDefsLoading}
+                    >
+                      <SelectTrigger id={`orderDetails.${index}.size`}>
+                        <SelectValue placeholder={sizeDefsLoading ? "Loading sizes..." : "Select size"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {sizeDefsLoading ? (
+                          <SelectItem disabled value="loading">Loading...</SelectItem>
+                        ) : sizeDefs.length === 0 ? (
+                          <SelectItem disabled value="no-sizes">No sizes available. Add sizes in Configurations.</SelectItem>
+                        ) : (
+                          sizeDefs.map((sizeDef: SizeDef) => {
+                            // Extract size number from name (e.g., "Size 8" -> 8)
+                            const sizeMatch = sizeDef.name.match(/\d+/);
+                            const sizeNumber = sizeMatch ? sizeMatch[0] : sizeDef.id.toString();
+                            const genderLabel = sizeDef.genderType === "male" ? "Male" : "Female";
+                            return (
+                              <SelectItem key={sizeDef.id} value={sizeNumber}>
+                                {sizeDef.name} ({genderLabel})
+                                {sizeDef.description && ` - ${sizeDef.description}`}
+                              </SelectItem>
+                            );
+                          })
+                        )}
+                      </SelectContent>
+                    </Select>
                     {errors.orderDetails?.[index]?.size && (
                       <p className="text-sm text-red-600">
                         {errors.orderDetails[index]?.size?.message}

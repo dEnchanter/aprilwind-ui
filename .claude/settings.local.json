@@ -23,7 +23,10 @@
       "Bash(for dir in configurations customers dashboard-overview invoice-management items-management item-types material-request production-management production-orders product-stock user-management)",
       "Bash(do if [ -f \"src/app/(dashboard)/$dir/page.tsx\" ])",
       "Bash(then echo \"✅ $dir\")",
-      "Bash(else echo \"❌ $dir (no page.tsx)\")"
+      "Bash(else echo \"❌ $dir (no page.tsx)\")",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(npx shadcn@latest add:*)"
     ],
     "deny": [],
     "ask": []

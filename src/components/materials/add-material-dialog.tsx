@@ -133,11 +133,13 @@ export function AddMaterialDialog({ open, onClose }: AddMaterialDialogProps) {
                           Loading types...
                         </SelectItem>
                       ) : itemTypes?.data ? (
-                        itemTypes.data.map((type: any) => (
-                          <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name} ({type.unit})
-                          </SelectItem>
-                        ))
+                        itemTypes.data
+                          .filter((type: any) => type.isActive)
+                          .map((type: any) => (
+                            <SelectItem key={type.id} value={type.id.toString()}>
+                              {type.name} ({type.unit})
+                            </SelectItem>
+                          ))
                       ) : (
                         <SelectItem value="0" disabled>
                           No types available

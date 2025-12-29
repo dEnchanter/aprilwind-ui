@@ -26,16 +26,23 @@ export const useDashboardOverview = () => {
         };
         sales: {
           totalInvoices: number;
+          open: number;
+          paid: number;
+          delivered: number;
           totalRevenue: string;
           averageOrderValue: string;
         };
         materials: {
           pendingRequests: number;
+          approvedRequests: number;
+          totalRawMaterials: number;
           lowStockMaterials: number;
         };
         inventory: {
           totalProductStock: number;
           availableStock: number;
+          soldStock: number;
+          availabilityRate: string;
         };
       }>(Endpoint.GET_DASHBOARD_OVERVIEW);
       return response;
@@ -60,6 +67,12 @@ export const useDashboardAlerts = () => {
           count: number;
           message: string;
           action: string;
+          link?: string;
+          items?: Array<{
+            id: number;
+            name: string;
+            currentQty: number;
+          }>;
         }>;
       }>(Endpoint.GET_DASHBOARD_ALERTS);
       return response;
@@ -76,10 +89,19 @@ export const useDashboardActivities = (limit: number = 20) => {
     queryFn: async () => {
       const endpoint = `${Endpoint.GET_DASHBOARD_ACTIVITIES}?limit=${limit}`;
       const response = await fetchGet<{
+        total: number;
         activities: Array<{
-          id: number;
           type: string;
-          description: string;
+          action: string;
+          details: {
+            productionId?: number;
+            productionCode?: string;
+            stage?: string;
+            requestId?: number;
+            status?: string;
+            notes?: string;
+            [key: string]: any;
+          };
           performedBy: string;
           timestamp: string;
         }>;

@@ -49,16 +49,7 @@ const Page = () => {
 
   // Calculate statistics (only for fetched data)
   const stats = useMemo(() => {
-    const totalConfigs = rolesData.length + itemTypesData.length + customerTypesData.length + sizeDefsData.length;
-
     return [
-      {
-        title: "Total Configs",
-        value: totalConfigs,
-        icon: Settings,
-        bgColor: "bg-blue-50",
-        iconColor: "text-blue-600",
-      },
       {
         title: "Roles",
         value: rolesData.length,
@@ -145,7 +136,7 @@ const Page = () => {
       </motion.div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -208,56 +199,28 @@ const Page = () => {
                     className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
                   >
                     <Shield className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Roles</span>
-                      {!isLoading && (
-                        <span className="text-[10px] sm:text-xs opacity-80">
-                          {rolesData.length} roles
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-medium text-xs sm:text-sm">Roles</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="itemTypes"
                     className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
                   >
                     <Tags className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Item Types</span>
-                      {!isLoading && (
-                        <span className="text-[10px] sm:text-xs opacity-80">
-                          {itemTypesData.length} types
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-medium text-xs sm:text-sm">Item Types</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="customerTypes"
                     className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
                   >
                     <Users className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Customer Types</span>
-                      {!isLoading && (
-                        <span className="text-[10px] sm:text-xs opacity-80">
-                          {customerTypesData.length} types
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-medium text-xs sm:text-sm">Customer Types</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="sizeDefs"
                     className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
                   >
                     <Ruler className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Size Definitions</span>
-                      {!isLoading && (
-                        <span className="text-[10px] sm:text-xs opacity-80">
-                          {sizeDefsData.length} sizes
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-medium text-xs sm:text-sm">Size Definitions</span>
                   </TabsTrigger>
                 </TabsList>
               </Tabs>

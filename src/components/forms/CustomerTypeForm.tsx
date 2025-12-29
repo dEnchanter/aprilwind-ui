@@ -7,16 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Input } from "../ui/input";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from "react";
 import { Form, FormControl, FormField } from "../ui/form";
-import { Endpoint } from "@/services/api";
-import { fetchPost, fetchPatch } from "@/services/fetcher";
-import { toast } from "sonner";
 import { z } from "zod";
 import { CustomerTypeFormData, customerTypeSchema } from "@/schemas/customerTypeSchema";
 import { cn } from "@/lib/utils";
+import { useCreateCustomerType, useUpdateCustomerType } from "@/hooks/useCustomerType";
 
 const CustomerTypeForm = ({ className, closeDialog, initialValues }: { className?: string, closeDialog: () => void, initialValues?: Partial<CustomerType> }) => {
+  const createMutation = useCreateCustomerType();
+  const updateMutation = useUpdateCustomerType();
+
   const form = useForm<z.infer<typeof customerTypeSchema>>({
     resolver: zodResolver(customerTypeSchema),
     defaultValues: {
@@ -24,24 +24,26 @@ const CustomerTypeForm = ({ className, closeDialog, initialValues }: { className
     },
   });
 
-  const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit: SubmitHandler<CustomerTypeFormData> = async (data) => {
-    setIsLoadingSubmit(true);
-
-    try {
-      if (initialValues?.id) {
-        const responseData: any = await fetchPatch(`${Endpoint.UPDATE_CUSTOMER_TYPE}/${initialValues.id}`, data);
-        toast.success(responseData?.message || "Customer Type updated successfully!");
-      } else {
-        const responseData: any = await fetchPost(Endpoint.CREATE_CUSTOMER_TYPE, data);
-        toast.success(responseData?.message || "Customer Type created successfully!");
-      }
-      closeDialog();
-    } catch (error: any) {
-      toast.error(error?.message || 'An unexpected error occurred');
-    } finally {
-      setIsLoadingSubmit(false);
+    if (initialValues?.id) {
+      updateMutation.mutate(
+        { id: initialValues.id, data },
+        {
+          onSuccess: () => {
+            closeDialog();
+            form.reset();
+          },
+        }
+      );
+    } else {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          closeDialog();
+          form.reset();
+        },
+      });
     }
   };
 
@@ -67,12 +69,14 @@ const CustomerTypeForm = ({ className, closeDialog, initialValues }: { className
           />
         
           <div className="flex items-center justify-end space-x-2">
-            <Button type="button" size="lg" variant="outline" onClick={closeDialog}>Cancel</Button>
+            <Button type="button" size="lg" variant="outline" onClick={closeDialog} disabled={isLoading}>
+              Cancel
+            </Button>
             <CustomButton
               type="submit"
               size="lg"
               className=" bg-[#0F3F5F] hover:bg-[#0F3F5F]"
-              isLoading={isLoadingSubmit}
+              isLoading={isLoading}
             >
                {initialValues?.id ? "Update Customer Type" : "Create Customer Type"}
             </CustomButton>

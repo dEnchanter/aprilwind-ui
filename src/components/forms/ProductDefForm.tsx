@@ -6,6 +6,9 @@ import { Button, CustomButton } from "@/components/ui/button";
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "../ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { SubmitHandler, useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormMessage } from "../ui/form";
@@ -13,9 +16,10 @@ import { Input } from "../ui/input";
 import { z } from "zod";
 import { ProductDefFormData, productDefSchema } from "@/schemas/productDefSchema";
 import { useCreateProductDef, useUpdateProductDef } from "@/hooks/useProductDef";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useMaterials } from "@/hooks/useMaterials";
+import { useSizeDefs } from "@/hooks/useSizeDefs";
 import { Loader2, Plus, X } from "lucide-react";
 
 interface ProductDefFormProps extends React.ComponentProps<"form"> {
@@ -23,15 +27,15 @@ interface ProductDefFormProps extends React.ComponentProps<"form"> {
   initialValues?: Partial<ProductDef>;
 }
 
-// Available sizes - you may want to fetch this from an API
-const AVAILABLE_SIZES = [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50];
-
 const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFormProps) => {
   const createProductDef = useCreateProductDef();
   const updateProductDef = useUpdateProductDef();
   const currentUser = useCurrentUser();
   const { data: materialsResponse, isLoading: materialsLoading } = useMaterials({ page: 1, limit: 100 });
   const materials = materialsResponse?.data || [];
+  const { data: sizeDefsResponse, isLoading: sizeDefsLoading } = useSizeDefs();
+  const sizeDefs = sizeDefsResponse?.data || [];
+  const [sizePopoverOpen, setSizePopoverOpen] = useState(false);
 
   const isEditing = !!initialValues?.id;
   const isLoading = createProductDef.isPending || updateProductDef.isPending;
@@ -290,26 +294,92 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
           {/* Available Sizes */}
           <div className="space-y-4">
             <div className="text-sm font-semibold text-gray-700">Available Sizes</div>
-            <div className="grid grid-cols-6 gap-2">
-              {AVAILABLE_SIZES.map((size) => {
-                const isSelected = form.watch('productSizes').includes(size);
-                return (
-                  <button
-                    key={size}
+            {sizeDefsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-sm text-gray-500">Loading sizes...</span>
+              </div>
+            ) : sizeDefs.length === 0 ? (
+              <div className="border border-dashed rounded-lg p-4 text-center text-gray-500 text-sm">
+                No sizes defined. Please add size definitions in the Configurations page.
+              </div>
+            ) : (
+              <Popover open={sizePopoverOpen} onOpenChange={setSizePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
                     type="button"
-                    onClick={() => handleSizeToggle(size)}
-                    className={cn(
-                      "px-3 py-2 rounded border text-sm font-medium transition-colors",
-                      isSelected
-                        ? "bg-brand-700 text-white border-brand-700"
-                        : "bg-white text-gray-700 border-gray-300 hover:border-brand-700"
-                    )}
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={sizePopoverOpen}
+                    className="w-full justify-between h-auto min-h-10"
                   >
-                    {size}
-                  </button>
-                );
-              })}
-            </div>
+                    <div className="flex flex-wrap gap-1">
+                      {form.watch('productSizes').length > 0 ? (
+                        form.watch('productSizes').sort((a, b) => a - b).map((size) => (
+                          <span
+                            key={size}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-800"
+                          >
+                            Size {size}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">Select sizes...</span>
+                      )}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Search sizes..." />
+                    <CommandGroup className="max-h-64 overflow-auto">
+                      {sizeDefs.length === 0 ? (
+                        <div className="py-6 text-center text-sm">No sizes found.</div>
+                      ) : (
+                        sizeDefs.map((sizeDef: SizeDef) => {
+                          // Extract size number from name (e.g., "Size 8" -> 8)
+                          const sizeMatch = sizeDef.name.match(/\d+/);
+                          const sizeNumber = sizeMatch ? parseInt(sizeMatch[0]) : sizeDef.id;
+                          const isSelected = form.watch('productSizes').includes(sizeNumber);
+                          const genderLabel = sizeDef.genderType === "male" ? "Male" : "Female";
+
+                          return (
+                            <div
+                              key={sizeDef.id}
+                              onClick={() => {
+                                handleSizeToggle(sizeNumber);
+                              }}
+                              className={cn(
+                                "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground",
+                                "cursor-pointer"
+                              )}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  isSelected ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {sizeDef.name} ({genderLabel})
+                                </span>
+                                {sizeDef.description && (
+                                  <span className="text-xs text-gray-500">
+                                    {sizeDef.description}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            )}
             {form.formState.errors.productSizes && (
               <FormMessage className="text-red-600 text-xs p-1">
                 {form.formState.errors.productSizes.message}

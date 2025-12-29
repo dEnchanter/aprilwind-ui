@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { sizeDefSchema, SizeDefFormData } from "@/schemas/sizeDefSchema";
 import { useCreateSizeDef, useUpdateSizeDef } from "@/hooks/useSizeDefs";
 import { SizeDef } from "@/types/size-def";
@@ -25,12 +32,13 @@ export default function SizeDefForm({ closeDialog, initialValues }: SizeDefFormP
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<SizeDefFormData>({
     resolver: zodResolver(sizeDefSchema),
     defaultValues: {
-      size: initialValues?.size || undefined,
       name: initialValues?.name || "",
       description: initialValues?.description || "",
+      genderType: initialValues?.genderType || "",
     },
   });
 
@@ -69,49 +77,58 @@ export default function SizeDefForm({ closeDialog, initialValues }: SizeDefFormP
         </p>
       </div>
 
-      {/* Size Input */}
-      <div className="space-y-2">
-        <Label htmlFor="size">
-          Size <span className="text-red-500">*</span>
-        </Label>
-        <Input
-          id="size"
-          type="number"
-          step="0.01"
-          placeholder="e.g., 10, 12, 14, 42, etc."
-          {...register("size")}
-        />
-        {errors.size && (
-          <p className="text-sm text-red-600">{errors.size.message}</p>
-        )}
-        <p className="text-xs text-gray-500">
-          Enter the numeric size value (can include decimals)
-        </p>
-      </div>
-
       {/* Name Input */}
       <div className="space-y-2">
-        <Label htmlFor="name">Name (Optional)</Label>
+        <Label htmlFor="name">
+          Size Name <span className="text-red-500">*</span>
+        </Label>
         <Input
           id="name"
           type="text"
-          placeholder="e.g., Small, Medium, Large, XL, etc."
+          placeholder="e.g., Size 8, Size 10, Size 12, etc."
           {...register("name")}
         />
         {errors.name && (
           <p className="text-sm text-red-600">{errors.name.message}</p>
         )}
         <p className="text-xs text-gray-500">
-          A friendly name or label for this size (e.g., "Small", "Medium")
+          Enter the size name (e.g., "Size 8", "Size 10", "Size 12")
+        </p>
+      </div>
+
+      {/* Gender Type */}
+      <div className="space-y-2">
+        <Label htmlFor="genderType">
+          Gender Type <span className="text-red-500">*</span>
+        </Label>
+        <Select
+          onValueChange={(value) => setValue("genderType", value)}
+          defaultValue={initialValues?.genderType || ""}
+        >
+          <SelectTrigger id="genderType">
+            <SelectValue placeholder="Select gender type..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="male">Male</SelectItem>
+            <SelectItem value="female">Female</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.genderType && (
+          <p className="text-sm text-red-600">{errors.genderType.message}</p>
+        )}
+        <p className="text-xs text-gray-500">
+          Specify if this size is for male or female
         </p>
       </div>
 
       {/* Description */}
       <div className="space-y-2">
-        <Label htmlFor="description">Description (Optional)</Label>
+        <Label htmlFor="description">
+          Description <span className="text-red-500">*</span>
+        </Label>
         <Textarea
           id="description"
-          placeholder="e.g., Medium, Large, Extra Large, or any additional notes..."
+          placeholder="e.g., Extra Small (XS) - Chest 32-34 inches, Small (S) - Chest 34-36 inches"
           rows={3}
           {...register("description")}
         />
