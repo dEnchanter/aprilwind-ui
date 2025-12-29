@@ -104,8 +104,8 @@ export const useRegister = () => {
       return response;
     },
     onSuccess: () => {
-      toast.success('User registered successfully');
-      // Invalidate staff queries if needed
+      toast.success('Login credentials registered successfully');
+      // Invalidate staff queries to refresh login status
       queryClient.invalidateQueries({ queryKey: ['staff'] });
     },
     onError: (error: any) => {

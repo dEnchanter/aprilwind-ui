@@ -48,24 +48,15 @@ axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return Promise.reject(error);
 });
 
-// Response interceptor - Handle 401 and 403 errors
+// Response interceptor - Handle 401 errors (unauthenticated)
 axiosInstance.interceptors.response.use(
   response => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // If error is 403 (Forbidden/Permission Denied), redirect to unauthorized page
+    // 403 (Forbidden) - User is authenticated but lacks permission
+    // Let the mutation's onError handler deal with it (will show toast)
     if (error.response?.status === 403) {
-      // Skip 403 redirect for logout endpoint
-      if (originalRequest.url?.includes('/auth/logout')) {
-        return Promise.reject(error);
-      }
-
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/unauthorized')) {
-        window.location.replace('/unauthorized');
-        // Return a promise that never resolves to prevent error UI
-        return new Promise(() => {});
-      }
       return Promise.reject(error);
     }
 

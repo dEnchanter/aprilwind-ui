@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from 'react';
-import { useCustomers } from '@/hooks/useCustomers';
+import { useCustomers, useDeleteCustomer } from '@/hooks/useCustomers';
 import { useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { Skeleton } from '../ui/skeleton';
@@ -23,6 +23,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -39,6 +49,7 @@ import {
   MapPin,
   User,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Separator } from '../ui/separator';
@@ -53,12 +64,14 @@ interface CustomerTableProps {
 const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
   const { data: customersResponse, isLoading } = useCustomers({ page: 1, limit: 100 });
   const customers = customersResponse?.data || [];
+  const deleteCustomerMutation = useDeleteCustomer();
   const router = useRouter();
 
   const [open, setOpen] = useState(false);
   const [editCustomer, setEditCustomer] = useState<Partial<Customer> | undefined>(undefined);
   const [viewSidebarOpen, setViewSidebarOpen] = useState(false);
   const [viewCustomer, setViewCustomer] = useState<any | null>(null);
+  const [deleteCustomer, setDeleteCustomer] = useState<any | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -81,6 +94,20 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
 
   const handleViewProfile = (customerId: number) => {
     router.push(`/customers/${customerId}`);
+  };
+
+  const handleDelete = (customer: any) => {
+    setDeleteCustomer(customer);
+  };
+
+  const confirmDelete = () => {
+    if (deleteCustomer?.id) {
+      deleteCustomerMutation.mutate(deleteCustomer.id, {
+        onSuccess: () => {
+          setDeleteCustomer(null);
+        },
+      });
+    }
   };
 
   const totalPages = Math.ceil(customers.length / limit);
@@ -214,6 +241,14 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(customer)}
+                            className="cursor-pointer text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -271,11 +306,9 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
       </div>
 
       {/* Edit Dialog */}
-      {!hideAddButton && (
-        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
-          <CustomerForm closeDialog={toggleDialog} initialValues={editCustomer} />
-        </CustomDialog>
-      )}
+      <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
+        <CustomerForm closeDialog={toggleDialog} initialValues={editCustomer} />
+      </CustomDialog>
 
       {/* View Details Sidebar */}
       <Sheet open={viewSidebarOpen} onOpenChange={setViewSidebarOpen}>
@@ -394,6 +427,28 @@ const CustomerTable = ({ hideAddButton = false }: CustomerTableProps) => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteCustomer} onOpenChange={() => setDeleteCustomer(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{deleteCustomer?.name}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteCustomerMutation.isPending}
+            >
+              {deleteCustomerMutation.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

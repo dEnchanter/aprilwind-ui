@@ -8,15 +8,12 @@ import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from "react";
 import { Form, FormControl, FormField, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
-import { Endpoint } from "@/services/api";
-import { fetchPatch, fetchPost } from "@/services/fetcher";
-import { toast } from "sonner";
 import { z } from "zod";
-import { CustomerFormData, customerSchema } from "@/schemas/customerSchema"; // Assuming customerSchema is defined
+import { CustomerFormData, customerSchema } from "@/schemas/customerSchema";
 import { useCustomerType } from "@/hooks/useCustomerType";
+import { useCreateCustomer, useUpdateCustomer } from "@/hooks/useCustomers";
 
 interface CustomerFormProps extends React.ComponentProps<"form"> {
   closeDialog: () => void;
@@ -24,6 +21,9 @@ interface CustomerFormProps extends React.ComponentProps<"form"> {
 }
 
 const CustomerForm = ({ className, closeDialog, initialValues }: CustomerFormProps) => {
+  const createMutation = useCreateCustomer();
+  const updateMutation = useUpdateCustomer();
+
   const form = useForm<z.infer<typeof customerSchema>>({
     resolver: zodResolver(customerSchema),
     defaultValues: {
@@ -36,29 +36,34 @@ const CustomerForm = ({ className, closeDialog, initialValues }: CustomerFormPro
 
   const { data: customerTypes, isLoading: customerTypeIsLoading, isError } = useCustomerType();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit: SubmitHandler<CustomerFormData> = async (data) => {
-    setIsLoading(true);
+    // Transform data to match API expectations
+    const processedData = {
+      name: data.name,
+      address: data.address,
+      country: data.country,
+      typeId: data.customerType.id,
+    };
 
-    const processedData = { ...data };
-
-    try {
-      if (initialValues?.id) {
-        const responseData: any = await fetchPatch(
-          `${Endpoint.UPDATE_CUSTOMER}/${initialValues.id}`,
-          processedData
-        );
-        toast.success(responseData?.message || "Customer updated successfully!");
-      } else {
-        const responseData: any = await fetchPost(Endpoint.CREATE_CUSTOMER, processedData);
-        toast.success(responseData?.message || "Customer created successfully!");
-      }
-      closeDialog();
-    } catch (error: any) {
-      toast.error(error?.message || 'An unexpected error occurred');
-    } finally {
-      setIsLoading(false);
+    if (initialValues?.id) {
+      updateMutation.mutate(
+        { id: initialValues.id, data: processedData },
+        {
+          onSuccess: () => {
+            closeDialog();
+            form.reset();
+          },
+        }
+      );
+    } else {
+      createMutation.mutate(processedData, {
+        onSuccess: () => {
+          closeDialog();
+          form.reset();
+        },
+      });
     }
   };
 
@@ -154,7 +159,13 @@ const CustomerForm = ({ className, closeDialog, initialValues }: CustomerFormPro
                   <FormControl className={field.value ? 'font-medium' : 'border-gray-300'}>
                     <Select
                       value={field.value && field.value > 0 ? String(field.value) : undefined}
-                      onValueChange={(value) => field.onChange(Number(value))}
+                      onValueChange={(value) => {
+                        const selectedType = customerTypes?.find((type: any) => type.id === Number(value));
+                        if (selectedType) {
+                          form.setValue('customerType.id', selectedType.id);
+                          form.setValue('customerType.type', selectedType.type);
+                        }
+                      }}
                       disabled={isLoading}  // Disable the select while loading
                     >
                       <SelectTrigger>

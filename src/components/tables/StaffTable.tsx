@@ -2,9 +2,10 @@
 "use client"
 
 import { useState } from 'react';
-import { useStaff } from '@/hooks/useStaff';
+import { useStaff, useActivateStaff, useDeactivateStaff } from '@/hooks/useStaff';
 import { Button } from '../ui/button';
 import { Skeleton } from '../ui/skeleton';
+import { RegisterLoginDialog } from '../dialog/RegisterLoginDialog';
 import {
   Table,
   TableBody,
@@ -22,6 +23,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -36,6 +47,11 @@ import {
   MapPin,
   Shield,
   User,
+  UserCheck,
+  UserX,
+  UserPlus,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { Separator } from '../ui/separator';
@@ -50,11 +66,16 @@ interface StaffTableProps {
 const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
   const { data: staffResponse, isLoading } = useStaff({ page: 1, limit: 100 });
   const staff = staffResponse?.data || [];
+  const activateStaffMutation = useActivateStaff();
+  const deactivateStaffMutation = useDeactivateStaff();
 
   const [open, setOpen] = useState(false);
   const [editStaff, setEditStaff] = useState<Partial<Staff> | undefined>(undefined);
   const [viewSidebarOpen, setViewSidebarOpen] = useState(false);
   const [viewStaff, setViewStaff] = useState<any | null>(null);
+  const [actionStaff, setActionStaff] = useState<{ staff: any; action: 'activate' | 'deactivate' } | null>(null);
+  const [registerLoginOpen, setRegisterLoginOpen] = useState(false);
+  const [registerStaff, setRegisterStaff] = useState<{ id: number; staffName: string } | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
@@ -73,6 +94,37 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
   const handleView = (staff: any) => {
     setViewStaff(staff);
     setViewSidebarOpen(true);
+  };
+
+  const handleActivate = (staff: any) => {
+    setActionStaff({ staff, action: 'activate' });
+  };
+
+  const handleDeactivate = (staff: any) => {
+    setActionStaff({ staff, action: 'deactivate' });
+  };
+
+  const handleRegisterLogin = (staff: any) => {
+    setRegisterStaff({ id: staff.id, staffName: staff.staffName });
+    setRegisterLoginOpen(true);
+  };
+
+  const confirmAction = () => {
+    if (actionStaff?.staff?.id) {
+      if (actionStaff.action === 'activate') {
+        activateStaffMutation.mutate(actionStaff.staff.id, {
+          onSuccess: () => {
+            setActionStaff(null);
+          },
+        });
+      } else {
+        deactivateStaffMutation.mutate(actionStaff.staff.id, {
+          onSuccess: () => {
+            setActionStaff(null);
+          },
+        });
+      }
+    }
   };
 
   const totalPages = Math.ceil(staff.length / limit);
@@ -94,7 +146,8 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Email</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Role</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Status</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Account Status</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Login Status</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -105,6 +158,7 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-40" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-20" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))}
@@ -151,7 +205,8 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Name</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Email</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Role</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Status</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Account Status</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Login Status</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -171,7 +226,7 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                       </Badge>
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      {member.isActive !== false ? (
+                      {member.login?.isActive !== false ? (
                         <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
                           Active
                         </Badge>
@@ -179,6 +234,19 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                         <Badge className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100">
                           Inactive
                         </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      {member.login ? (
+                        <div className="flex items-center gap-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span className="text-xs font-medium text-green-700">Has Login</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <XCircle className="h-4 w-4 text-gray-400" />
+                          <span className="text-xs text-gray-500">No Login</span>
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
@@ -209,6 +277,36 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          {!member.login && member.role?.isLogin && (
+                            <>
+                              <DropdownMenuItem
+                                onClick={() => handleRegisterLogin(member)}
+                                className="cursor-pointer text-blue-600 focus:text-blue-600"
+                              >
+                                <UserPlus className="mr-2 h-4 w-4" />
+                                Register Login
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                          {member.login?.isActive !== false ? (
+                            <DropdownMenuItem
+                              onClick={() => handleDeactivate(member)}
+                              className="cursor-pointer text-orange-600 focus:text-orange-600"
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Deactivate Account
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={() => handleActivate(member)}
+                              className="cursor-pointer text-green-600 focus:text-green-600"
+                            >
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Activate Account
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -266,11 +364,9 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
       </div>
 
       {/* Edit Dialog */}
-      {!hideAddButton && (
-        <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
-          <StaffForm closeDialog={toggleDialog} initialValues={editStaff} />
-        </CustomDialog>
-      )}
+      <CustomDialog open={open} toggleOpen={toggleDialog} dialogWidth="sm:max-w-[700px]">
+        <StaffForm closeDialog={toggleDialog} initialValues={editStaff} />
+      </CustomDialog>
 
       {/* View Details Sidebar */}
       <Sheet open={viewSidebarOpen} onOpenChange={setViewSidebarOpen}>
@@ -399,7 +495,7 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                   )}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Status:</span>
-                    {viewStaff.isActive !== false ? (
+                    {viewStaff.login?.isActive !== false ? (
                       <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
                         Active
                       </Badge>
@@ -493,6 +589,55 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Activate/Deactivate Confirmation Dialog */}
+      <AlertDialog open={!!actionStaff} onOpenChange={() => setActionStaff(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {actionStaff?.action === 'activate' ? 'Activate' : 'Deactivate'} Staff Account
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {actionStaff?.action === 'activate' ? (
+                <>
+                  Are you sure you want to activate &quot;{actionStaff?.staff?.staffName}&quot;&apos;s account?
+                  They will be able to log in again.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to deactivate &quot;{actionStaff?.staff?.staffName}&quot;&apos;s account?
+                  They will not be able to log in, but their data will be preserved.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmAction}
+              className={
+                actionStaff?.action === 'activate'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-orange-600 hover:bg-orange-700'
+              }
+              disabled={activateStaffMutation.isPending || deactivateStaffMutation.isPending}
+            >
+              {activateStaffMutation.isPending || deactivateStaffMutation.isPending
+                ? `${actionStaff?.action === 'activate' ? 'Activating' : 'Deactivating'}...`
+                : actionStaff?.action === 'activate'
+                ? 'Activate'
+                : 'Deactivate'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Register Login Dialog */}
+      <RegisterLoginDialog
+        open={registerLoginOpen}
+        onOpenChange={setRegisterLoginOpen}
+        staff={registerStaff}
+      />
     </>
   );
 };

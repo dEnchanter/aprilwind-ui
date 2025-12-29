@@ -100,32 +100,39 @@ const StaffForm = ({ className, closeDialog, initialValues }: StaffFormProps) =>
 
   const onSubmit: SubmitHandler<StaffFormData> = async (data) => {
     // Transform the form data to match API expectations
+    const staffName = `${data.firstName} ${data.lastName}`.trim();
+
+    // Build references array (only if professional reference has data)
+    const references = [];
+    if (data.professionalRefName || data.professionalRefContact || data.professionalRefRelation) {
+      references.push({
+        name: data.professionalRefName || "",
+        address: "", // Optional in backend
+        relationship: data.professionalRefRelation || "",
+        id: "", // Optional in backend
+      });
+    }
+
     const apiData = {
-      firstName: data.firstName,
-      lastName: data.lastName,
+      staffName,
       dob: data.dob,
-      picture: data.picture || "",
+      picture: data.picture || null,
       address: data.address,
       lga: data.lga,
       stateOfOrigin: data.stateOfOrigin,
       country: data.country,
       identity: {
-        passportNumber: data.passportNumber || "",
+        type: data.passportNumber ? "Passport" : "National ID",
+        number: data.passportNumber || "",
       },
       email: data.email,
       phoneNumber: data.phoneNumber,
-      nextOfKin: {
+      nextofkin: {
         name: data.nextOfKinName || "",
+        address: "", // Backend expects this field
         relationship: data.nextOfKinRelationship || "",
-        contact: data.nextOfKinContact || "",
       },
-      references: {
-        professional: {
-          name: data.professionalRefName || "",
-          contact: data.professionalRefContact || "",
-          relation: data.professionalRefRelation || "",
-        },
-      },
+      references,
       roleId: data.roleId,
     };
 

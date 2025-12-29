@@ -89,24 +89,47 @@ export const useUpdateStaff = () => {
   });
 };
 
-// Delete staff mutation
-export const useDeleteStaff = () => {
+// Activate staff account mutation
+export const useActivateStaff = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const endpoint = typeof Endpoint.DELETE_STAFF === 'function'
-        ? Endpoint.DELETE_STAFF(id)
-        : `${Endpoint.GET_STAFF}/${id}`;
-      const response = await fetchDelete<any>(endpoint);
+      const endpoint = typeof Endpoint.ACTIVATE_ACCOUNT === 'function'
+        ? Endpoint.ACTIVATE_ACCOUNT(id)
+        : `auth/${id}/activate`;
+      const response = await fetchPatch<any, any>(endpoint, {});
       return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: staffKeys.lists() });
-      toast.success('Staff member deleted successfully');
+      toast.success('Staff account activated successfully');
     },
     onError: (error: any) => {
-      const message = error?.message || 'Failed to delete staff member';
+      const message = error?.message || 'Failed to activate staff account';
+      toast.error(message);
+    },
+  });
+};
+
+// Deactivate staff account mutation
+export const useDeactivateStaff = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const endpoint = typeof Endpoint.DEACTIVATE_ACCOUNT === 'function'
+        ? Endpoint.DEACTIVATE_ACCOUNT(id)
+        : `auth/${id}/deactivate`;
+      const response = await fetchPatch<any, any>(endpoint, {});
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: staffKeys.lists() });
+      toast.success('Staff account deactivated successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to deactivate staff account';
       toast.error(message);
     },
   });
