@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
-import { fetchGet, fetchPost, fetchPatch, fetchDelete } from '@/services/fetcher';
+import { fetchGet, fetchPost, fetchPatch } from '@/services/fetcher';
 import { toast } from 'sonner';
 import { PaginationParams, PaginatedResponse } from './useRoles';
 

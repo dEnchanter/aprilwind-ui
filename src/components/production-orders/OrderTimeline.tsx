@@ -10,7 +10,6 @@ import {
   Package,
   Truck,
   Ban,
-  Link2,
   FileCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

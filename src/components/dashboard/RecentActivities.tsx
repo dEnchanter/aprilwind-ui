@@ -12,6 +12,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
+import { DashboardActivity } from '@/types/dashboard';
 
 interface RecentActivitiesProps {
   activities: DashboardActivity[];

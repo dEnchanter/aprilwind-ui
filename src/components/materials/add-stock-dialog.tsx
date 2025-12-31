@@ -169,7 +169,7 @@ export function AddStockDialog({ material, open, onClose }: AddStockDialogProps)
                         setUnitCostDisplay(formatted);
                         field.onChange(numericValue);
                       }}
-                      onFocus={(e) => {
+                      onFocus={() => {
                         // Remove formatting when focused for easier editing
                         const numericValue = parseCurrency(unitCostDisplay);
                         setUnitCostDisplay(numericValue === 0 ? '' : numericValue.toString());

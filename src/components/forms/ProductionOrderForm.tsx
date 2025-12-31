@@ -23,6 +23,7 @@ import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useSizeDefs } from "@/hooks/useSizeDefs";
 import { Loader2, Plus, Trash2, Package } from "lucide-react";
+import { SizeDef } from "@/types/size-def";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
 import {

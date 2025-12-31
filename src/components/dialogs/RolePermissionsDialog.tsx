@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ShieldCheck, Search, X, Plus } from 'lucide-react';
+import { ShieldCheck, Search, X } from 'lucide-react';
 import {
   useAllPermissions,
   useRolePermissions,
@@ -52,11 +52,11 @@ export function RolePermissionsDialog({ role, open, onClose }: RolePermissionsDi
 
   // Group permissions by module (based on name prefix like "production:", "invoice:", etc.)
   const groupedPermissions = filteredPermissions.reduce((acc, permission) => {
-    const module = permission.name.split(':')[0] || 'other';
-    if (!acc[module]) {
-      acc[module] = [];
+    const permissionModule = permission.name.split(':')[0] || 'other';
+    if (!acc[permissionModule]) {
+      acc[permissionModule] = [];
     }
-    acc[module].push(permission);
+    acc[permissionModule].push(permission);
     return acc;
   }, {} as Record<string, Permission[]>);
 

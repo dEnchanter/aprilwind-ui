@@ -56,7 +56,7 @@ export const useAddPermissionToRole = () => {
 
   return useMutation({
     mutationFn: async ({ roleId, permissionId }: { roleId: number; permissionId: number }) => {
-      const response = await fetchPatch<any, { permissionIds: number[] }>(
+      const response = await fetchPatch<unknown, { permissionIds: number[] }>(
         Endpoint.ADD_PERMISSIONS_TO_ROLE(roleId),
         { permissionIds: [permissionId] }
       );
@@ -67,7 +67,7 @@ export const useAddPermissionToRole = () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success('Permission assigned successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const message = error?.message || 'Failed to assign permission';
       toast.error(message);
     },
@@ -80,7 +80,7 @@ export const useRemovePermissionFromRole = () => {
 
   return useMutation({
     mutationFn: async ({ roleId, permissionId }: { roleId: number; permissionId: number }) => {
-      const response = await fetchDelete<any>(
+      const response = await fetchDelete<unknown>(
         Endpoint.REMOVE_PERMISSION_FROM_ROLE(roleId, permissionId)
       );
       return response;
@@ -90,7 +90,7 @@ export const useRemovePermissionFromRole = () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success('Permission removed successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const message = error?.message || 'Failed to remove permission';
       toast.error(message);
     },
@@ -103,7 +103,7 @@ export const useAssignPermissionsToRole = () => {
 
   return useMutation({
     mutationFn: async ({ roleId, permissionIds }: { roleId: number; permissionIds: number[] }) => {
-      const response = await fetchPost<any, { permissionIds: number[] }>(
+      const response = await fetchPost<unknown, { permissionIds: number[] }>(
         Endpoint.ASSIGN_PERMISSIONS_TO_ROLE(roleId),
         { permissionIds }
       );
@@ -114,7 +114,7 @@ export const useAssignPermissionsToRole = () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       toast.success('Permissions updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const message = error?.message || 'Failed to update permissions';
       toast.error(message);
     },

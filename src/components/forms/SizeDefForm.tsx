@@ -92,7 +92,7 @@ export default function SizeDefForm({ closeDialog, initialValues }: SizeDefFormP
           <p className="text-sm text-red-600">{errors.name.message}</p>
         )}
         <p className="text-xs text-gray-500">
-          Enter the size name (e.g., "Size 8", "Size 10", "Size 12")
+          Enter the size name (e.g., &quot;Size 8&quot;, &quot;Size 10&quot;, &quot;Size 12&quot;)
         </p>
       </div>
 

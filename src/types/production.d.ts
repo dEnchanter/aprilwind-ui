@@ -96,6 +96,7 @@ interface ProductionAnalytics {
 interface CreateProductionRequest {
   code: string;
   prodRequestedId: number; // Product for Production ID
+  quantity?: number; // Quantity for the selected size
   productInfo: {
     name: string;
     size: number;

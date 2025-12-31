@@ -140,9 +140,9 @@ export function CreateProductionFromOrderDialog({
               <strong>✓ What happens next:</strong>
             </p>
             <ul className="mt-2 text-xs text-green-700 space-y-1 ml-4 list-disc">
-              <li>A new production job will be created in "Bidding" stage</li>
+              <li>A new production job will be created in &quot;Bidding&quot; stage</li>
               <li>The production will be automatically linked to this order</li>
-              <li>Order status will change to "In Production"</li>
+              <li>Order status will change to &quot;In Production&quot;</li>
               <li>You can track production progress in the Productions page</li>
             </ul>
           </div>

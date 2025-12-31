@@ -24,7 +24,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Edit, PackageX, Eye, CheckCircle2, Clock, XCircle, Ban, RotateCcw } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useProductions, useCancelProduction, useReactivateProduction } from "@/hooks/useProductions";
-import { useMaterialRequestsByProduction } from "@/hooks/useMaterialRequest";
 import { getAccessToken } from "@/utils/storage";
 import {
   Dialog,

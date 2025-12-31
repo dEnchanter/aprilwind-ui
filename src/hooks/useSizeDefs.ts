@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export const sizeDefKeys = {
   all: ["sizeDefs"] as const,
   lists: () => [...sizeDefKeys.all, "list"] as const,
-  list: (params?: any) => [...sizeDefKeys.lists(), params] as const,
+  list: (params?: Record<string, unknown>) => [...sizeDefKeys.lists(), params] as const,
   details: () => [...sizeDefKeys.all, "detail"] as const,
   detail: (id: number) => [...sizeDefKeys.details(), id] as const,
 };
@@ -42,7 +42,7 @@ export const useCreateSizeDef = () => {
       queryClient.invalidateQueries({ queryKey: sizeDefKeys.lists() });
       toast.success("Size definition created successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || "Failed to create size definition");
     },
   });
@@ -60,7 +60,7 @@ export const useUpdateSizeDef = () => {
       queryClient.invalidateQueries({ queryKey: sizeDefKeys.detail(variables.id) });
       toast.success("Size definition updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || "Failed to update size definition");
     },
   });
@@ -76,7 +76,7 @@ export const useDeleteSizeDef = () => {
       queryClient.invalidateQueries({ queryKey: sizeDefKeys.lists() });
       toast.success("Size definition deleted successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error?.message || "Failed to delete size definition");
     },
   });

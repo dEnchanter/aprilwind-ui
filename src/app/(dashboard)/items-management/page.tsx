@@ -6,7 +6,7 @@ import { Plus, Search, Package, AlertTriangle, CheckCircle, Layers, Tags } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MaterialsTable } from "@/components/materials/materials-table";
 import { AddMaterialDialog } from "@/components/materials/add-material-dialog";
 import ItemTypeTable from "@/components/tables/ItemTypeTable";

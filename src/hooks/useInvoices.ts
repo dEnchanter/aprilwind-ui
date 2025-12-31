@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
-import { fetchGet, fetchPost, fetchPatch } from '@/services/fetcher';
+import { fetchGet, fetchPost } from '@/services/fetcher';
 import { toast } from 'sonner';
 
 // Query keys

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "../ui/command";
+import { Command, CommandGroup, CommandInput } from "../ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { SubmitHandler, useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,6 +21,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useMaterials } from "@/hooks/useMaterials";
 import { useSizeDefs } from "@/hooks/useSizeDefs";
 import { Loader2, Plus, X } from "lucide-react";
+import { SizeDef } from "@/types/size-def";
 
 // Format number as currency with commas and 2 decimal places
 const formatCurrency = (value: number | string): string => {
@@ -233,7 +234,7 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
                           setCostDisplay(formatted);
                           field.onChange(numericValue);
                         }}
-                        onFocus={(e) => {
+                        onFocus={() => {
                           // Remove formatting when focused for easier editing
                           const numericValue = parseCurrency(costDisplay);
                           setCostDisplay(numericValue === 0 ? '' : numericValue.toString());

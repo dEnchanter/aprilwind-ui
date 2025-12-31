@@ -12,7 +12,7 @@ import { getUserRoleDetail } from "@/utils/storage";
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [role, setRole] = useState<any>(null);
+  const [role, setRole] = useState<Role | null>(null);
 
   // Get user role only on client side to avoid hydration mismatch
   useEffect(() => {

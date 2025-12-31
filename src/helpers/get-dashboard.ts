@@ -1,3 +1,11 @@
+interface Dashboard {
+  itemCode: string;
+  requester: string;
+  approver: string;
+  quantity: string;
+  createdAt: string;
+}
+
 export async function fetchDashboard(): Promise<Dashboard[]> {
   return Promise.resolve([
     {

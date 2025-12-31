@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, Factory, DollarSign, Package, Layers, Users, FileText, AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Factory, DollarSign, Package, Layers, Users, FileText, AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ReportSkeleton } from './ReportSkeleton';

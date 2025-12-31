@@ -12,7 +12,6 @@ import {
   ApproveOrderData,
   RejectOrderData,
   CancelOrderData,
-  AssignToProductionData,
   CompleteOrderData,
   DeliverOrderData,
   UpdateProductionOrderData,
@@ -300,9 +299,7 @@ export const useUpdateProductionOrder = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateProductionOrderData }) => {
-      const endpoint = typeof Endpoint.UPDATE_PRODUCTION_ORDER === 'function'
-        ? Endpoint.UPDATE_PRODUCTION_ORDER(id)
-        : `${Endpoint.GET_PRODUCTION_ORDERS}/${id}`;
+      const endpoint = Endpoint.GET_PRODUCTION_ORDER(id);
       const response = await fetchPatch<ProductionOrder, UpdateProductionOrderData>(endpoint, data);
       return response;
     },
@@ -324,9 +321,7 @@ export const useDeleteProductionOrder = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const endpoint = typeof Endpoint.DELETE_PRODUCTION_ORDER === 'function'
-        ? Endpoint.DELETE_PRODUCTION_ORDER(id)
-        : `${Endpoint.GET_PRODUCTION_ORDERS}/${id}`;
+      const endpoint = Endpoint.GET_PRODUCTION_ORDER(id);
       const response = await fetchDelete<ProductionOrder>(endpoint);
       return response;
     },
@@ -335,8 +330,31 @@ export const useDeleteProductionOrder = () => {
       queryClient.invalidateQueries({ queryKey: productionOrderKeys.analytics });
       toast.success('Production order deleted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       const message = error?.message || 'Failed to delete production order';
+      toast.error(message);
+    },
+  });
+};
+
+// Assign production order to production (placeholder - not yet implemented in backend)
+export const useAssignToProduction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    mutationFn: async (_params: { id: number; data: { productionId: number; assignedBy: number; notes?: string } }) => {
+      // TODO: Implement backend endpoint for assigning production order to production
+      console.warn('useAssignToProduction: Backend endpoint not yet implemented');
+      throw new Error('This feature is not yet implemented');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productionOrderKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productionOrderKeys.analytics });
+      toast.success('Production order assigned successfully');
+    },
+    onError: (error: Error) => {
+      const message = error?.message || 'Failed to assign production order';
       toast.error(message);
     },
   });

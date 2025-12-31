@@ -124,67 +124,71 @@ export const AlertsSection: React.FC<AlertsSectionProps> = ({ alerts, loading })
             {alerts.map((alert, index) => {
               const styles = getAlertStyles(alert.severity);
               const transformedLink = transformLink(alert.link);
-              const AlertWrapper = transformedLink ? Link : 'div';
-              const wrapperProps = transformedLink
-                ? { href: transformedLink, className: 'block' }
-                : {};
 
-              return (
-                <AlertWrapper key={index} {...wrapperProps}>
-                  <div
-                    className={cn(
-                      'flex items-start justify-between p-4 rounded-lg border-2 transition-colors',
-                      styles.bg,
-                      styles.border,
-                      transformedLink && cn(styles.hoverBg, 'cursor-pointer')
-                    )}
-                  >
-                    <div className="flex items-start space-x-3 flex-1">
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getAlertIcon(alert.severity)}
+              const alertContent = (
+                <div
+                  className={cn(
+                    'flex items-start justify-between p-4 rounded-lg border-2 transition-colors',
+                    styles.bg,
+                    styles.border,
+                    transformedLink && cn(styles.hoverBg, 'cursor-pointer')
+                  )}
+                >
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className="flex-shrink-0 mt-0.5">
+                      {getAlertIcon(alert.severity)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <p className={cn('font-medium', styles.text)}>
+                          {alert.message}
+                        </p>
+                        {alert.count > 0 && (
+                          <Badge variant={styles.badgeVariant} className="text-xs">
+                            {alert.count}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <p className={cn('font-medium', styles.text)}>
-                            {alert.message}
-                          </p>
-                          {alert.count > 0 && (
-                            <Badge variant={styles.badgeVariant} className="text-xs">
-                              {alert.count}
-                            </Badge>
-                          )}
+
+                      {/* Show low stock items if available */}
+                      {alert.items && alert.items.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {alert.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="text-sm text-gray-700 flex items-center justify-between bg-white/50 px-2 py-1 rounded"
+                            >
+                              <span className="font-medium">{item.name}</span>
+                              <span className="text-xs text-gray-500">
+                                Qty: {item.currentQty}
+                              </span>
+                            </div>
+                          ))}
                         </div>
+                      )}
 
-                        {/* Show low stock items if available */}
-                        {alert.items && alert.items.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {alert.items.map((item) => (
-                              <div
-                                key={item.id}
-                                className="text-sm text-gray-700 flex items-center justify-between bg-white/50 px-2 py-1 rounded"
-                              >
-                                <span className="font-medium">{item.name}</span>
-                                <span className="text-xs text-gray-500">
-                                  Qty: {item.currentQty}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {alert.action && (
-                          <p className="text-sm text-gray-600 mt-2 flex items-center">
-                            <span className="font-medium">Action:</span>
-                            <span className="ml-1">{alert.action}</span>
-                            {transformedLink && (
-                              <ChevronRight className="h-4 w-4 ml-1" />
-                            )}
-                          </p>
-                        )}
-                      </div>
+                      {alert.action && (
+                        <p className="text-sm text-gray-600 mt-2 flex items-center">
+                          <span className="font-medium">Action:</span>
+                          <span className="ml-1">{alert.action}</span>
+                          {transformedLink && (
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          )}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </AlertWrapper>
+                </div>
+              );
+
+              return transformedLink ? (
+                <Link key={index} href={transformedLink} className="block">
+                  {alertContent}
+                </Link>
+              ) : (
+                <div key={index}>
+                  {alertContent}
+                </div>
               );
             })}
           </div>
