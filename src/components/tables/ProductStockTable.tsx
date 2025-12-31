@@ -24,8 +24,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   MoreHorizontal,
   Eye,
-  Edit,
-  Trash2,
   Box,
   CheckCircle2,
   XCircle,
@@ -48,8 +46,6 @@ interface ProductStockTableProps {
   limit: number;
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
-  onEdit: (stock: any) => void;
-  onDelete: (stock: any) => void;
   onMarkAsSold: (stock: any) => void;
 }
 
@@ -60,8 +56,6 @@ export function ProductStockTable({
   limit,
   onPageChange,
   onLimitChange,
-  onEdit,
-  onDelete,
   onMarkAsSold,
 }: ProductStockTableProps) {
   const [viewSidebarOpen, setViewSidebarOpen] = useState(false);
@@ -78,13 +72,15 @@ export function ProductStockTable({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div className="w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-full">
               <TableHeader>
                 <TableRow className="bg-gray-50 hover:bg-gray-50">
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Production Code</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Product</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Size</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Quantity</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Status</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Date Added</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
@@ -95,6 +91,8 @@ export function ProductStockTable({
                   <TableRow key={i}>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-28" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-12" /></TableCell>
+                    <TableCell className="px-6 py-4"><Skeleton className="h-12 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
@@ -126,13 +124,15 @@ export function ProductStockTable({
 
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+      <div className="w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="min-w-full">
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
                 <TableHead className="px-6 py-4 font-semibold text-gray-700">Production Code</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700">Product</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700">Size</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700">Quantity</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700">Status</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700">Date Added</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
@@ -140,8 +140,12 @@ export function ProductStockTable({
             </TableHeader>
             <TableBody>
               {paginatedData.map((stock) => {
-                const isAvailable = stock.isAvailable;
                 const productInfo = stock.productInfo;
+                const quantity = stock.quantity || 0;
+                const quantitySold = stock.quantitySold || 0;
+                const available = quantity - quantitySold;
+                // Status should be based on available quantity, not isAvailable flag
+                const isAvailable = available > 0;
 
                 return (
                   <TableRow
@@ -158,11 +162,34 @@ export function ProductStockTable({
                         <span className="font-medium text-sm text-gray-900">
                           {productInfo?.name || '-'}
                         </span>
-                        {productInfo?.size && (
+                        {stock.productDef?.code && (
                           <span className="text-xs text-gray-500 mt-0.5">
-                            Size {productInfo.size}
+                            {stock.productDef.code}
                           </span>
                         )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <span className="font-medium text-sm text-gray-900">
+                        {productInfo?.size || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-6 py-4">
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-gray-500">Total:</span>
+                          <span className="font-semibold text-gray-900">{quantity}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-gray-500">Sold:</span>
+                          <span className="font-medium text-gray-600">{quantitySold}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-gray-500">Available:</span>
+                          <span className={`font-semibold ${available > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                            {available}
+                          </span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="px-6 py-4">
@@ -223,22 +250,6 @@ export function ProductStockTable({
                               </DropdownMenuItem>
                             </>
                           )}
-
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => onEdit(stock)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="mr-2 h-4 w-4 text-gray-500" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDelete(stock)}
-                            className="text-red-600 cursor-pointer focus:text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -349,6 +360,20 @@ export function ProductStockTable({
                       {viewStock.productInfo?.name || '-'}
                     </span>
                   </div>
+                  {viewStock.productDef?.code && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Product Code:</span>
+                      <span className="font-medium">{viewStock.productDef.code}</span>
+                    </div>
+                  )}
+                  {viewStock.productDef?.cost && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Unit Cost:</span>
+                      <span className="font-semibold text-green-700">
+                        ₦{viewStock.productDef.cost.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   {viewStock.productInfo?.size && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Size:</span>
@@ -361,16 +386,43 @@ export function ProductStockTable({
                       <span className="font-medium text-xs">{viewStock.productInfo.details}</span>
                     </div>
                   )}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Quantity Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm text-gray-700">Quantity Information</h3>
+                <div className="space-y-2 pl-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Quantity:</span>
+                    <span className="font-semibold text-gray-900">
+                      {viewStock.quantity || 0} units
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Quantity Sold:</span>
+                    <span className="font-medium text-gray-600">
+                      {viewStock.quantitySold || 0} units
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
+                    <span className="text-gray-700 font-medium">Available:</span>
+                    <span className={`font-bold text-lg ${(viewStock.quantity || 0) - (viewStock.quantitySold || 0) > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                      {(viewStock.quantity || 0) - (viewStock.quantitySold || 0)} units
+                    </span>
+                  </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Status:</span>
                     <Badge
                       className={
-                        viewStock.isAvailable
+                        ((viewStock.quantity || 0) - (viewStock.quantitySold || 0) > 0)
                           ? "bg-green-100 text-green-700 border-green-300"
                           : "bg-gray-100 text-gray-700 border-gray-300"
                       }
                     >
-                      {viewStock.isAvailable ? (
+                      {((viewStock.quantity || 0) - (viewStock.quantitySold || 0) > 0) ? (
                         <>
                           <CheckCircle2 className="h-3 w-3 mr-1" />
                           Available
@@ -378,7 +430,7 @@ export function ProductStockTable({
                       ) : (
                         <>
                           <XCircle className="h-3 w-3 mr-1" />
-                          Sold
+                          Sold Out
                         </>
                       )}
                     </Badge>

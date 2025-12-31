@@ -49,7 +49,7 @@ export const SalesReport: React.FC<SalesReportProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard
           title="Total Revenue"
-          value={formatNairaCurrency(parseFloat(data.summary.totalRevenue))}
+          value={formatNairaCurrency(data.summary.totalRevenue)}
           icon={DollarSign}
           bgColor="bg-emerald-50"
           iconColor="text-emerald-600"
@@ -63,7 +63,7 @@ export const SalesReport: React.FC<SalesReportProps> = ({
         />
         <MetricCard
           title="Avg Order Value"
-          value={formatNairaCurrency(parseFloat(data.summary.averageOrderValue))}
+          value={formatNairaCurrency(data.summary.averageOrderValue)}
           icon={TrendingUp}
           bgColor="bg-purple-50"
           iconColor="text-purple-600"
@@ -82,7 +82,7 @@ export const SalesReport: React.FC<SalesReportProps> = ({
                 <div key={status} className="p-4 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100">
                   <p className="text-xs font-medium text-gray-600 uppercase mb-1">{status}</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {formatNairaCurrency(parseFloat(revenue))}
+                    {formatNairaCurrency(revenue)}
                   </p>
                 </div>
               ))}
@@ -112,7 +112,7 @@ export const SalesReport: React.FC<SalesReportProps> = ({
                     <tr key={customer.customerId} className="hover:bg-gray-50">
                       <td className="py-3 px-4 text-sm">{customer.customerName}</td>
                       <td className="py-3 px-4 text-sm font-medium text-emerald-600">
-                        {formatNairaCurrency(parseFloat(customer.totalSpent))}
+                        {formatNairaCurrency(customer.totalSpent)}
                       </td>
                       <td className="py-3 px-4 text-sm">{customer.invoiceCount}</td>
                     </tr>
@@ -145,7 +145,7 @@ export const SalesReport: React.FC<SalesReportProps> = ({
                     <tr key={idx} className="hover:bg-gray-50">
                       <td className="py-3 px-4 text-sm">{trend.period}</td>
                       <td className="py-3 px-4 text-sm font-medium text-emerald-600">
-                        {formatNairaCurrency(parseFloat(trend.revenue))}
+                        {formatNairaCurrency(trend.revenue)}
                       </td>
                       <td className="py-3 px-4 text-sm">{trend.invoiceCount}</td>
                     </tr>

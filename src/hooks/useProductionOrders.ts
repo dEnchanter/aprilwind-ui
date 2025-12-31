@@ -191,14 +191,17 @@ export const useRejectProductionOrder = () => {
   });
 };
 
-// Assign to production mutation
-export const useAssignToProduction = () => {
+// Create production from order mutation
+export const useCreateProductionFromOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: AssignToProductionData }) => {
-      const response = await fetchPost<ProductionOrder, AssignToProductionData>(
-        Endpoint.ASSIGN_PRODUCTION_ORDER(id),
+    mutationFn: async ({ id, data }: { id: number; data: { createdBy: number; notes?: string } }) => {
+      const endpoint = typeof Endpoint.CREATE_PRODUCTION_FROM_ORDER === 'function'
+        ? Endpoint.CREATE_PRODUCTION_FROM_ORDER(id)
+        : `production-orders/${id}/create-production`;
+      const response = await fetchPost<ProductionOrder, { createdBy: number; notes?: string }>(
+        endpoint,
         data
       );
       return response;
@@ -207,10 +210,10 @@ export const useAssignToProduction = () => {
       queryClient.invalidateQueries({ queryKey: productionOrderKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productionOrderKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: productionOrderKeys.analytics });
-      toast.success('Order assigned to production successfully');
+      toast.success('Production created successfully from order');
     },
     onError: (error: any) => {
-      const message = error?.message || 'Failed to assign to production';
+      const message = error?.message || 'Failed to create production from order';
       toast.error(message);
     },
   });

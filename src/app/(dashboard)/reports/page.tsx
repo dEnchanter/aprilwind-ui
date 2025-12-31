@@ -2,8 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
 import { DateFilterBar } from '@/components/reports/DateFilterBar';
 import { ProductionReport } from '@/components/reports/ProductionReport';
 import { SalesReport } from '@/components/reports/SalesReport';
@@ -24,8 +22,6 @@ import {
   useBusinessReport
 } from '@/hooks/useReports';
 import { getDateRangeForPreset, type DatePreset } from '@/utils/datePresets';
-import { exportReportToExcel } from '@/utils/reportExport';
-import { toast } from 'sonner';
 
 type ReportTab =
   | 'production'
@@ -57,67 +53,6 @@ const ReportsPage = () => {
     setActivePreset(preset as DatePreset);
   };
 
-  const handleExport = () => {
-    try {
-      let data: ProductionReportData | SalesReportData | InventoryReportData | MaterialsReportData | CustomersReportData | ProductionOrdersReportData | StaffReportData | BusinessReportData | undefined;
-      let reportType: string;
-
-      switch (activeTab) {
-        case 'production':
-          data = productionQuery.data;
-          reportType = 'production';
-          break;
-        case 'sales':
-          data = salesQuery.data;
-          reportType = 'sales';
-          break;
-        case 'inventory':
-          data = inventoryQuery.data;
-          reportType = 'inventory';
-          break;
-        case 'materials':
-          data = materialsQuery.data;
-          reportType = 'materials';
-          break;
-        case 'customers':
-          data = customersQuery.data;
-          reportType = 'customers';
-          break;
-        case 'production-orders':
-          data = productionOrdersQuery.data;
-          reportType = 'production-orders';
-          break;
-        case 'staff':
-          data = staffQuery.data;
-          reportType = 'staff';
-          break;
-        case 'business':
-          data = businessQuery.data;
-          reportType = 'business';
-          break;
-        default:
-          toast.error('Invalid report type');
-          return;
-      }
-
-      if (!data) {
-        toast.error('No data available to export');
-        return;
-      }
-
-      exportReportToExcel(data, reportType, {
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-        label: dateRange.label
-      });
-
-      toast.success('Report exported successfully');
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Failed to export report');
-    }
-  };
-
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -126,10 +61,6 @@ const ReportsPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
           <p className="text-gray-600 mt-1">Comprehensive business insights and performance metrics</p>
         </div>
-        <Button onClick={handleExport} className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Export to Excel
-        </Button>
       </div>
 
       {/* Date Filter Bar */}

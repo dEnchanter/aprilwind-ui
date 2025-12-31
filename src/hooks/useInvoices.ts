@@ -56,8 +56,30 @@ export const useCustomerInvoices = (customerId: number) => {
 export const useGenerateInvoiceNumber = () => {
   return useMutation({
     mutationFn: async () => {
-      const response = await fetchGet<{ invoiceNo: string }>(Endpoint.GENERATE_INVOICE_NUMBER);
-      return response;
+      // Custom fetch to handle text response instead of JSON
+      const token = localStorage.getItem('accessToken');
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const url = `${baseUrl}/${Endpoint.GENERATE_INVOICE_NUMBER}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate invoice number');
+      }
+
+      // Get the response as text (not JSON)
+      const invoiceNo = await response.text();
+
+      // Remove quotes if the API returns it as a quoted string
+      const cleanInvoiceNo = invoiceNo.replace(/^"|"$/g, '');
+
+      return cleanInvoiceNo;
     },
   });
 };
@@ -73,6 +95,8 @@ export const useCreateInvoice = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      // Invalidate product stock to refresh quantity sold
+      queryClient.invalidateQueries({ queryKey: ['product-stocks'] });
       toast.success('Invoice created successfully');
     },
     onError: (error: any) => {
@@ -87,13 +111,33 @@ export const useMarkInvoiceAsPaid = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetchPatch<any, any>(Endpoint.MARK_INVOICE_AS_PAID(id), {});
+    mutationFn: async ({
+      id,
+      receivedBy,
+      paymentMethod,
+      referenceNumber,
+      paymentDate,
+      notes
+    }: {
+      id: number;
+      receivedBy: number;
+      paymentMethod: 'cash' | 'card' | 'transfer' | 'cheque' | 'other';
+      referenceNumber?: string;
+      paymentDate?: string;
+      notes?: string;
+    }) => {
+      const response = await fetchPost<any, any>(Endpoint.MARK_INVOICE_AS_PAID(id), {
+        receivedBy,
+        paymentMethod,
+        referenceNumber,
+        paymentDate,
+        notes,
+      });
       return response;
     },
-    onSuccess: (_, id) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(variables.id) });
       toast.success('Invoice marked as paid');
     },
     onError: (error: any) => {
@@ -108,14 +152,33 @@ export const useCancelInvoice = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetchPatch<any, any>(Endpoint.CANCEL_INVOICE(id), {});
+    mutationFn: async ({
+      id,
+      cancelledBy,
+      reason,
+      restoreStock = true,
+      notes
+    }: {
+      id: number;
+      cancelledBy: number;
+      reason: string;
+      restoreStock?: boolean;
+      notes?: string;
+    }) => {
+      const response = await fetchPost<any, any>(Endpoint.CANCEL_INVOICE(id), {
+        cancelledBy,
+        reason,
+        restoreStock,
+        notes,
+      });
       return response;
     },
-    onSuccess: (_, id) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(id) });
-      toast.success('Invoice cancelled');
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(variables.id) });
+      // Invalidate product stock to reflect restored quantities
+      queryClient.invalidateQueries({ queryKey: ['product-stocks'] });
+      toast.success('Invoice cancelled successfully');
     },
     onError: (error: any) => {
       const message = error?.message || 'Failed to cancel invoice';

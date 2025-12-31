@@ -10,21 +10,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import {
   useMaterialRequests,
-  useDeleteMaterialRequest,
 } from "@/hooks/useMaterialRequest";
 import { MaterialRequestsTable } from "@/components/tables/MaterialRequestsTable";
 import CustomDialog from "@/components/dialog/CustomDialog";
 import MaterialRequestForm from "@/components/forms/MaterialRequestForm";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export default function MaterialRequestPage() {
   const [page, setPage] = useState(1);
@@ -32,11 +21,10 @@ export default function MaterialRequestPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editMaterialRequest, setEditMaterialRequest] = useState<Partial<MaterialRequest> | undefined>(undefined);
-  const [deleteMaterialRequest, setDeleteMaterialRequest] = useState<MaterialRequest | null>(null);
   const [limit, setLimit] = useState(20);
 
-  const { data: materialRequestsResponse, isLoading } = useMaterialRequests();
-  const deleteMutation = useDeleteMaterialRequest();
+  // Fetch all material requests with a high limit to get all records for client-side filtering
+  const { data: materialRequestsResponse, isLoading } = useMaterialRequests({ page: 1, limit: 1000 });
 
   const allMaterialRequests = materialRequestsResponse?.data || [];
 
@@ -44,20 +32,6 @@ export default function MaterialRequestPage() {
     setEditMaterialRequest(request);
     setShowAddDialog(true);
   }, []);
-
-  const handleDelete = useCallback((request: MaterialRequest) => {
-    setDeleteMaterialRequest(request);
-  }, []);
-
-  const confirmDelete = () => {
-    if (deleteMaterialRequest) {
-      deleteMutation.mutate(deleteMaterialRequest.id, {
-        onSuccess: () => {
-          setDeleteMaterialRequest(null);
-        },
-      });
-    }
-  };
 
   // Get data based on filter tab
   const getActiveData = () => {
@@ -253,7 +227,6 @@ export default function MaterialRequestPage() {
         onPageChange={setPage}
         onLimitChange={setLimit}
         onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
       {/* Add/Edit Material Request Dialog */}
@@ -273,28 +246,6 @@ export default function MaterialRequestPage() {
           initialValues={editMaterialRequest}
         />
       </CustomDialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteMaterialRequest} onOpenChange={() => setDeleteMaterialRequest(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Material Request</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this material request? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

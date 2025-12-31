@@ -82,7 +82,8 @@ export function formatNairaCurrency(amount: string | number, currency: string = 
   }
 
   // Convert the input to a number if it is a string
-  const numericAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  // Remove commas from string before parsing to handle formatted numbers like "10,000"
+  const numericAmount = typeof amount === 'string' ? parseFloat(amount.replace(/,/g, '')) : amount;
 
   // Ensure the amount is a valid number
   if (isNaN(numericAmount)) {

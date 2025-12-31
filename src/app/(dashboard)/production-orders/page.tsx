@@ -13,22 +13,11 @@ import { ProductionOrdersTable } from "@/components/tables/ProductionOrdersTable
 import {
   useProductionOrders,
   useProductionOrderAnalytics,
-  useDeleteProductionOrder,
 } from "@/hooks/useProductionOrders";
 import { ProductionOrder } from "@/types/production-order";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { ApproveOrderDialog } from "@/components/production-orders/ApproveOrderDialog";
 import { RejectOrderDialog } from "@/components/production-orders/RejectOrderDialog";
-import { AssignToProductionDialog } from "@/components/production-orders/AssignToProductionDialog";
+import { CreateProductionFromOrderDialog } from "@/components/production-orders/CreateProductionFromOrderDialog";
 import { CompleteOrderDialog } from "@/components/production-orders/CompleteOrderDialog";
 import { DeliverOrderDialog } from "@/components/production-orders/DeliverOrderDialog";
 import { CancelOrderDialog } from "@/components/production-orders/CancelOrderDialog";
@@ -51,11 +40,10 @@ export default function ProductionOrdersPage() {
   // Workflow dialog states
   const [approveOrder, setApproveOrder] = useState<ProductionOrder | null>(null);
   const [rejectOrder, setRejectOrder] = useState<ProductionOrder | null>(null);
-  const [assignOrder, setAssignOrder] = useState<ProductionOrder | null>(null);
+  const [createProductionOrder, setCreateProductionOrder] = useState<ProductionOrder | null>(null);
   const [completeOrder, setCompleteOrder] = useState<ProductionOrder | null>(null);
   const [deliverOrder, setDeliverOrder] = useState<ProductionOrder | null>(null);
   const [cancelOrder, setCancelOrder] = useState<ProductionOrder | null>(null);
-  const [deleteOrder, setDeleteOrder] = useState<ProductionOrder | null>(null);
 
   // Fetch data
   const statusFilter = filterTab === 'all' ? undefined : filterTab;
@@ -65,7 +53,6 @@ export default function ProductionOrdersPage() {
     status: statusFilter,
   });
   const { data: analytics, isLoading: analyticsLoading } = useProductionOrderAnalytics();
-  const deleteOrderMutation = useDeleteProductionOrder();
 
   const allOrders = ordersResponse?.data || [];
 
@@ -162,8 +149,8 @@ export default function ProductionOrdersPage() {
     setRejectOrder(order);
   };
 
-  const handleAssign = (order: ProductionOrder) => {
-    setAssignOrder(order);
+  const handleCreateProduction = (order: ProductionOrder) => {
+    setCreateProductionOrder(order);
   };
 
   const handleComplete = (order: ProductionOrder) => {
@@ -176,20 +163,6 @@ export default function ProductionOrdersPage() {
 
   const handleCancel = (order: ProductionOrder) => {
     setCancelOrder(order);
-  };
-
-  const handleDelete = (order: ProductionOrder) => {
-    setDeleteOrder(order);
-  };
-
-  const confirmDelete = () => {
-    if (deleteOrder?.id) {
-      deleteOrderMutation.mutate(deleteOrder.id, {
-        onSuccess: () => {
-          setDeleteOrder(null);
-        },
-      });
-    }
   };
 
   return (
@@ -358,11 +331,10 @@ export default function ProductionOrdersPage() {
         onEdit={handleEdit}
         onApprove={handleApprove}
         onReject={handleReject}
-        onAssign={handleAssign}
+        onCreateProduction={handleCreateProduction}
         onComplete={handleComplete}
         onDeliver={handleDeliver}
         onCancel={handleCancel}
-        onDelete={handleDelete}
       />
 
       {/* Create/Edit Order Dialog */}
@@ -383,28 +355,6 @@ export default function ProductionOrdersPage() {
         />
       </CustomDialog>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteOrder} onOpenChange={() => setDeleteOrder(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Production Order</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete order {deleteOrder?.orderNo}? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteOrderMutation.isPending}
-            >
-              {deleteOrderMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Workflow Dialogs */}
       <ApproveOrderDialog
         order={approveOrder}
@@ -418,10 +368,10 @@ export default function ProductionOrdersPage() {
         onClose={() => setRejectOrder(null)}
       />
 
-      <AssignToProductionDialog
-        order={assignOrder}
-        open={!!assignOrder}
-        onClose={() => setAssignOrder(null)}
+      <CreateProductionFromOrderDialog
+        order={createProductionOrder}
+        open={!!createProductionOrder}
+        onClose={() => setCreateProductionOrder(null)}
       />
 
       <CompleteOrderDialog

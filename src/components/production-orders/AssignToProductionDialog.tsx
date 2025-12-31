@@ -12,11 +12,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { assignToProductionSchema, AssignToProductionFormData } from "@/schemas/productionOrderSchema";
 import { useAssignToProduction } from "@/hooks/useProductionOrders";
+import { useProductions } from "@/hooks/useProductions";
 import { ProductionOrder } from "@/types/production-order";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -29,12 +36,14 @@ interface AssignToProductionDialogProps {
 export function AssignToProductionDialog({ order, open, onClose }: AssignToProductionDialogProps) {
   const currentUser = useCurrentUser();
   const assignMutation = useAssignToProduction();
+  const { data: productions, isLoading: loadingProductions } = useProductions({ page: 1, limit: 100 });
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<AssignToProductionFormData>({
     resolver: zodResolver(assignToProductionSchema),
   });
@@ -46,9 +55,10 @@ export function AssignToProductionDialog({ order, open, onClose }: AssignToProdu
       {
         id: order.id,
         data: {
-          ...data,
+          productionId: data.productionId,
           assignedBy: currentUser.staffId,
-        } as any,
+          notes: data.notes,
+        },
       },
       {
         onSuccess: () => {
@@ -77,22 +87,51 @@ export function AssignToProductionDialog({ order, open, onClose }: AssignToProdu
         </AlertDialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
-          {/* Production ID */}
+          {/* Production Selection */}
           <div className="space-y-2">
             <Label htmlFor="productionId">
-              Production Job ID <span className="text-red-500">*</span>
+              Select Production <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="productionId"
-              type="number"
-              placeholder="Enter production job ID"
-              {...register("productionId")}
-            />
+            <Select
+              onValueChange={(value) => setValue("productionId", parseInt(value), { shouldValidate: true })}
+              disabled={loadingProductions}
+            >
+              <SelectTrigger id="productionId">
+                <SelectValue placeholder={loadingProductions ? "Loading productions..." : "Select a production..."} />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingProductions ? (
+                  <div className="p-2 text-center text-sm text-gray-500">
+                    Loading productions...
+                  </div>
+                ) : !productions || productions.length === 0 ? (
+                  <div className="p-2 text-center text-sm text-gray-500">
+                    No available productions found
+                  </div>
+                ) : (
+                  productions
+                    .filter((prod: any) =>
+                      !prod.movedToStock &&
+                      (prod.stage === 'bidding' || prod.stage === 'in production')
+                    ) // Only show productions in bidding or in production stage
+                    .map((production: any) => (
+                      <SelectItem key={production.id} value={production.id.toString()}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{production.code}</span>
+                          <span className="text-xs text-gray-500">
+                            {production.productInfo?.name} - Size {production.productInfo?.size} - {production.stage}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))
+                )}
+              </SelectContent>
+            </Select>
             {errors.productionId && (
               <p className="text-sm text-red-600">{errors.productionId.message}</p>
             )}
             <p className="text-xs text-gray-500">
-              The ID of the production job this order will be linked to
+              Select an existing production job to link this order to
             </p>
           </div>
 

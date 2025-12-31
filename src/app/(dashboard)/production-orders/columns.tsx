@@ -22,7 +22,6 @@ import {
   Truck,
   ClipboardCheck,
   Ban,
-  Trash2,
   Link2,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
@@ -110,11 +109,10 @@ interface ColumnsProps {
   onEdit: (order: ProductionOrder) => void;
   onApprove: (order: ProductionOrder) => void;
   onReject: (order: ProductionOrder) => void;
-  onAssign: (order: ProductionOrder) => void;
+  onCreateProduction: (order: ProductionOrder) => void;
   onComplete: (order: ProductionOrder) => void;
   onDeliver: (order: ProductionOrder) => void;
   onCancel: (order: ProductionOrder) => void;
-  onDelete: (order: ProductionOrder) => void;
 }
 
 export const getColumns = ({
@@ -122,11 +120,10 @@ export const getColumns = ({
   onEdit,
   onApprove,
   onReject,
-  onAssign,
+  onCreateProduction,
   onComplete,
   onDeliver,
   onCancel,
-  onDelete,
 }: ColumnsProps): ColumnDef<ProductionOrder>[] => [
   {
     accessorKey: "orderNo",
@@ -182,30 +179,17 @@ export const getColumns = ({
     cell: ({ row }) => getStatusBadge(row.original.status),
   },
   {
-    accessorKey: "estimatedTotalCost",
-    header: "Total Cost",
-    cell: ({ row }) => {
-      const cost = row.original.agreedTotalCost || row.original.estimatedTotalCost;
-      return (
-        <div className="text-sm font-medium text-gray-900">
-          {cost.toLocaleString('en-US', { style: 'currency', currency: 'NGN' })}
-        </div>
-      );
-    },
-  },
-  {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
       const order = row.original;
       const canApprove = order.status === "pending";
       const canReject = order.status === "pending";
-      const canAssign = order.status === "approved";
+      const canCreateProduction = order.status === "approved" && !order.productionId;
       const canComplete = order.status === "in_production";
       const canDeliver = order.status === "completed";
       const canCancel = !["delivered", "cancelled"].includes(order.status);
       const canEdit = order.status === "pending";
-      const canDelete = order.status === "pending";
 
       return (
         <DropdownMenu>
@@ -257,15 +241,15 @@ export const getColumns = ({
               </DropdownMenuItem>
             )}
 
-            {canAssign && (
+            {canCreateProduction && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => onAssign(order)}
+                  onClick={() => onCreateProduction(order)}
                   className="cursor-pointer text-blue-600"
                 >
                   <Link2 className="mr-2 h-4 w-4" />
-                  Assign to Production
+                  Create Production
                 </DropdownMenuItem>
               </>
             )}
@@ -305,19 +289,6 @@ export const getColumns = ({
                 >
                   <Ban className="mr-2 h-4 w-4" />
                   Cancel Order
-                </DropdownMenuItem>
-              </>
-            )}
-
-            {canDelete && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onDelete(order)}
-                  className="cursor-pointer text-red-600"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Order
                 </DropdownMenuItem>
               </>
             )}

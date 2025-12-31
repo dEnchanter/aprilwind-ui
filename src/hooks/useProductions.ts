@@ -13,14 +13,14 @@ export const productionKeys = {
   detail: (id: number) => [...productionKeys.details(), id] as const,
 };
 
-// Fetch all productions (Product for Production)
+// Fetch all productions
 export const useProductions = (params?: { page?: number; limit?: number }) => {
   const query = params ? `?page=${params.page || 1}&limit=${params.limit || 10}` : '';
 
   return useQuery({
     queryKey: productionKeys.list(params || {}),
     queryFn: async () => {
-      const response = await fetchGet<{ data: any[] }>(Endpoint.GET_PRODUCTS_FOR_PRODUCTION + query);
+      const response = await fetchGet<{ data: any[] }>(Endpoint.GET_PRODUCTIONS + query);
       return response.data;
     },
   });
@@ -31,7 +31,7 @@ export const useProductionById = (id: number) => {
   return useQuery({
     queryKey: productionKeys.detail(id),
     queryFn: async () => {
-      const response = await fetchGet<any>(Endpoint.GET_PRODUCT_FOR_PRODUCTION(id));
+      const response = await fetchGet<any>(Endpoint.GET_PRODUCTION(id));
       return response;
     },
     enabled: !!id,
@@ -44,7 +44,7 @@ export const useCreateProduction = () => {
 
   return useMutation({
     mutationFn: async (data: any) => {
-      const response = await fetchPost<any, any>(Endpoint.CREATE_PRODUCT_FOR_PRODUCTION, data);
+      const response = await fetchPost<any, any>(Endpoint.CREATE_PRODUCTION, data);
       return response;
     },
     onSuccess: (data) => {
@@ -63,7 +63,7 @@ export const useUpdateProduction = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const response = await fetchPatch<any, any>(Endpoint.UPDATE_PRODUCT_FOR_PRODUCTION(id), data);
+      const response = await fetchPatch<any, any>(Endpoint.UPDATE_PRODUCTION(id), data);
       return response;
     },
     onSuccess: (data, variables) => {
@@ -83,7 +83,7 @@ export const useDeleteProduction = () => {
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await fetchDelete<any>(Endpoint.DELETE_PRODUCT_FOR_PRODUCTION(id));
+      const response = await fetchDelete<any>(Endpoint.DELETE_PRODUCTION(id));
       return response;
     },
     onSuccess: (data) => {
@@ -92,6 +92,52 @@ export const useDeleteProduction = () => {
     },
     onError: (error: any) => {
       toast.error(error?.message || 'Failed to delete production');
+    },
+  });
+};
+
+// Cancel production (soft delete)
+export const useCancelProduction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: number; reason: string }) => {
+      const response = await fetchPost<any, any>(
+        Endpoint.CANCEL_PRODUCT_FOR_PRODUCTION(id),
+        { reason }
+      );
+      return response;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: productionKeys.lists() });
+      toast.success(data?.message || 'Production request cancelled successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to cancel production request';
+      toast.error(message);
+    },
+  });
+};
+
+// Reactivate production
+export const useReactivateProduction = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetchPost<any, any>(
+        Endpoint.REACTIVATE_PRODUCT_FOR_PRODUCTION(id),
+        {}
+      );
+      return response;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: productionKeys.lists() });
+      toast.success(data?.message || 'Production request reactivated successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to reactivate production request';
+      toast.error(message);
     },
   });
 };

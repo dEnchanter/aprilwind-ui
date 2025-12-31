@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -26,15 +27,31 @@ interface ApproveOrderDialogProps {
   onClose: () => void;
 }
 
+// Format number as currency with commas and 2 decimal places
+const formatCurrency = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const parseCurrency = (value: string): number => {
+  const cleaned = value.replace(/,/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
 export function ApproveOrderDialog({ order, open, onClose }: ApproveOrderDialogProps) {
   const currentUser = useCurrentUser();
   const approveOrderMutation = useApproveProductionOrder();
+  const [agreedCostDisplay, setAgreedCostDisplay] = useState<string>("");
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<ApproveOrderFormData>({
     resolver: zodResolver(approveOrderSchema),
     defaultValues: {
@@ -43,6 +60,14 @@ export function ApproveOrderDialog({ order, open, onClose }: ApproveOrderDialogP
       notes: "",
     },
   });
+
+  // Initialize display value when order changes
+  useEffect(() => {
+    if (order?.estimatedTotalCost) {
+      setAgreedCostDisplay(formatCurrency(order.estimatedTotalCost));
+      setValue("agreedTotalCost", order.estimatedTotalCost);
+    }
+  }, [order, setValue]);
 
   const onSubmit = (data: ApproveOrderFormData) => {
     if (!order?.id || !currentUser.staffId) return;
@@ -66,7 +91,27 @@ export function ApproveOrderDialog({ order, open, onClose }: ApproveOrderDialogP
 
   const handleClose = () => {
     reset();
+    setAgreedCostDisplay("");
     onClose();
+  };
+
+  const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d.]/g, '');
+    setAgreedCostDisplay(value);
+    const numericValue = parseFloat(value) || 0;
+    setValue("agreedTotalCost", numericValue, { shouldValidate: true });
+  };
+
+  const handleCostBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const numericValue = parseFloat(e.target.value.replace(/[^\d.]/g, '')) || 0;
+    const formatted = formatCurrency(numericValue);
+    setAgreedCostDisplay(formatted);
+    setValue("agreedTotalCost", numericValue, { shouldValidate: true });
+  };
+
+  const handleCostFocus = () => {
+    const numericValue = parseCurrency(agreedCostDisplay);
+    setAgreedCostDisplay(numericValue === 0 ? '' : numericValue.toString());
   };
 
   if (!order) return null;
@@ -89,21 +134,23 @@ export function ApproveOrderDialog({ order, open, onClose }: ApproveOrderDialogP
               <p><span className="text-gray-600">Customer:</span> {order.customer?.name}</p>
               <p><span className="text-gray-600">Order Date:</span> {new Date(order.orderDate).toLocaleDateString()}</p>
               <p><span className="text-gray-600">Items:</span> {order.orderDetails?.length || 0}</p>
-              <p><span className="text-gray-600">Estimated Cost:</span> ₦{order.estimatedTotalCost?.toLocaleString()}</p>
+              <p><span className="text-gray-600">Estimated Cost:</span> ₦{formatCurrency(order.estimatedTotalCost || 0)}</p>
             </div>
           </div>
 
           {/* Agreed Total Cost */}
           <div className="space-y-2">
             <Label htmlFor="agreedTotalCost">
-              Agreed Total Cost <span className="text-red-500">*</span>
+              Agreed Total Cost (₦) <span className="text-red-500">*</span>
             </Label>
             <Input
               id="agreedTotalCost"
-              type="number"
-              step="0.01"
-              placeholder="Enter agreed total cost"
-              {...register("agreedTotalCost")}
+              type="text"
+              placeholder="0.00"
+              value={agreedCostDisplay}
+              onChange={handleCostChange}
+              onBlur={handleCostBlur}
+              onFocus={handleCostFocus}
             />
             {errors.agreedTotalCost && (
               <p className="text-sm text-red-600">{errors.agreedTotalCost.message}</p>

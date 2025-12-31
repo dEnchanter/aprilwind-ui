@@ -18,11 +18,13 @@ export const materialRequestKeys = {
 };
 
 // Get all material requests
-export const useMaterialRequests = () => {
+export const useMaterialRequests = (params?: { page?: number; limit?: number }) => {
+  const query = params ? `?page=${params.page || 1}&limit=${params.limit || 100}` : '';
+
   return useQuery({
     queryKey: materialRequestKeys.lists(),
     queryFn: async () => {
-      const response = await fetchGet<any>(Endpoint.GET_MATERIAL_REQUESTS);
+      const response = await fetchGet<any>(Endpoint.GET_MATERIAL_REQUESTS + query);
       return response;
     },
   });

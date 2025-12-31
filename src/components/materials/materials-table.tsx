@@ -26,7 +26,6 @@ import {
   MoreHorizontal,
   Eye,
   Edit,
-  Trash2,
   Plus,
   TrendingUp,
   Package,
@@ -36,7 +35,6 @@ import {
 import { AddStockDialog } from "./add-stock-dialog";
 import { AdjustStockDialog } from "./adjust-stock-dialog";
 import { EditMaterialDialog } from "./edit-material-dialog";
-import { DeleteMaterialDialog } from "./delete-material-dialog";
 
 interface MaterialsTableProps {
   data: any[];
@@ -63,7 +61,6 @@ export function MaterialsTable({
   const [addStockMaterial, setAddStockMaterial] = useState<any>(null);
   const [adjustStockMaterial, setAdjustStockMaterial] = useState<any>(null);
   const [editMaterial, setEditMaterial] = useState<any>(null);
-  const [deleteMaterial, setDeleteMaterial] = useState<any>(null);
 
   if (isLoading) {
     return (
@@ -255,13 +252,6 @@ export function MaterialsTable({
                             <Edit className="mr-2 h-4 w-4 text-gray-500" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setDeleteMaterial(material)}
-                            className="text-red-600 cursor-pointer focus:text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -363,14 +353,6 @@ export function MaterialsTable({
           material={editMaterial}
           open={!!editMaterial}
           onClose={() => setEditMaterial(null)}
-        />
-      )}
-
-      {deleteMaterial && (
-        <DeleteMaterialDialog
-          material={deleteMaterial}
-          open={!!deleteMaterial}
-          onClose={() => setDeleteMaterial(null)}
         />
       )}
     </>

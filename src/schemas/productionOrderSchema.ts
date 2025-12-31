@@ -34,7 +34,6 @@ export type ApproveOrderFormData = z.infer<typeof approveOrderSchema>;
 // Reject Order Schema
 export const rejectOrderSchema = z.object({
   reason: z.string().min(1, "Reason for rejection is required"),
-  notes: z.string().optional(),
 });
 
 export type RejectOrderFormData = z.infer<typeof rejectOrderSchema>;
@@ -42,7 +41,6 @@ export type RejectOrderFormData = z.infer<typeof rejectOrderSchema>;
 // Cancel Order Schema
 export const cancelOrderSchema = z.object({
   reason: z.string().min(1, "Reason for cancellation is required"),
-  notes: z.string().optional(),
 });
 
 export type CancelOrderFormData = z.infer<typeof cancelOrderSchema>;

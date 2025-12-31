@@ -87,11 +87,18 @@ export function InvoicesTable({
           Cancelled
         </Badge>
       );
-    } else {
+    } else if (statusLower === 'open' || statusLower === 'pending') {
       return (
         <Badge className="bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-100">
           <XCircle className="h-3 w-3 mr-1" />
-          Pending
+          {statusLower === 'open' ? 'Open' : 'Pending'}
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100">
+          <XCircle className="h-3 w-3 mr-1" />
+          {status || 'Unknown'}
         </Badge>
       );
     }
@@ -170,7 +177,21 @@ export function InvoicesTable({
               {paginatedData.map((invoice) => {
                 const status = invoice.status;
                 const customer = invoice.customer;
-                const invoiceDetails = invoice.invoiceDetails || {};
+                // New API structure uses 'items' instead of 'invoiceDetails'
+                const itemsArray = Array.isArray(invoice.items)
+                  ? invoice.items
+                  : [];
+                const firstItem = itemsArray[0] || {};
+                const itemCount = itemsArray.length;
+
+                // Calculate total from invoice items
+                const calculatedTotal = itemsArray.reduce((sum: number, item: any) => {
+                  const cost = parseFloat(item.cost || 0);
+                  const quantity = parseInt(item.quantity || 1);
+                  return sum + (cost * quantity);
+                }, 0);
+
+                const totalAmount = invoice.total || calculatedTotal;
 
                 return (
                   <TableRow
@@ -197,25 +218,30 @@ export function InvoicesTable({
                     <TableCell className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-medium text-sm text-gray-900">
-                          {invoiceDetails.productName || '-'}
+                          {firstItem.productName || '-'}
                         </span>
-                        {invoiceDetails.productSize && (
+                        {itemCount > 1 && (
                           <span className="text-xs text-gray-500 mt-0.5">
-                            Size {invoiceDetails.productSize}
+                            +{itemCount - 1} more item{itemCount > 2 ? 's' : ''}
+                          </span>
+                        )}
+                        {itemCount === 1 && firstItem.size && (
+                          <span className="text-xs text-gray-500 mt-0.5">
+                            Size {firstItem.size}
                           </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       <span className="font-semibold text-sm text-gray-900">
-                        ₦{invoiceDetails.salePrice?.toLocaleString() || '0'}
+                        ₦{totalAmount?.toLocaleString() || '0'}
                       </span>
                     </TableCell>
                     <TableCell className="px-6 py-4">
                       {getStatusBadge(status)}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-600">
-                      {invoiceDetails.saleDate ? formatDate(invoiceDetails.saleDate) : '-'}
+                      {invoice.genDate ? formatDate(invoice.genDate) : '-'}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right">
                       <DropdownMenu>
@@ -238,8 +264,8 @@ export function InvoicesTable({
                             View Details
                           </DropdownMenuItem>
 
-                          {/* Show Mark as Paid only for Pending invoices */}
-                          {status?.toLowerCase() === 'pending' && (
+                          {/* Show Mark as Paid only for Open/Pending invoices */}
+                          {(status?.toLowerCase() === 'pending' || status?.toLowerCase() === 'open') && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -371,11 +397,37 @@ export function InvoicesTable({
                     {getStatusBadge(viewInvoice.status)}
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Sale Date:</span>
+                    <span className="text-gray-600">Generated Date:</span>
                     <span className="font-medium">
-                      {viewInvoice.invoiceDetails?.saleDate ? formatDate(viewInvoice.invoiceDetails.saleDate) : '-'}
+                      {viewInvoice.genDate ? formatDate(viewInvoice.genDate) : '-'}
                     </span>
                   </div>
+                  {viewInvoice.generator && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Generated By:</span>
+                      <span className="font-medium">{viewInvoice.generator.staffName}</span>
+                    </div>
+                  )}
+                  {(() => {
+                    // New API structure uses 'items' instead of 'invoiceDetails'
+                    const itemsArray = Array.isArray(viewInvoice.items)
+                      ? viewInvoice.items
+                      : [];
+                    const calculatedTotal = itemsArray.reduce((sum: number, item: any) => {
+                      const cost = parseFloat(item.cost || 0);
+                      const quantity = parseInt(item.quantity || 1);
+                      return sum + (cost * quantity);
+                    }, 0);
+                    const totalAmount = viewInvoice.total || calculatedTotal;
+                    return (
+                      <div className="flex justify-between text-sm pt-2 border-t border-gray-200">
+                        <span className="text-gray-700 font-medium">Total Amount:</span>
+                        <span className="font-bold text-lg text-brand-700">
+                          ₦{totalAmount?.toLocaleString() || '0'}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -412,61 +464,60 @@ export function InvoicesTable({
 
               <Separator />
 
-              {/* Product Details */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-gray-700">Product Details</h3>
-                <div className="space-y-2 pl-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Product:</span>
-                    <span className="font-medium">{viewInvoice.invoiceDetails?.productName || '-'}</span>
-                  </div>
-                  {viewInvoice.invoiceDetails?.productSize && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Size:</span>
-                      <span className="font-medium">{viewInvoice.invoiceDetails.productSize}</span>
-                    </div>
-                  )}
-                  {viewInvoice.invoiceDetails?.productionCode && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Production Code:</span>
-                      <span className="font-mono text-xs">{viewInvoice.invoiceDetails.productionCode}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Sale Price:</span>
-                    <span className="font-bold text-lg text-brand-700">
-                      ₦{viewInvoice.invoiceDetails?.salePrice?.toLocaleString() || '0'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              {/* Invoice Items */}
+              {(() => {
+                // New API structure uses 'items' instead of 'invoiceDetails'
+                const itemsArray = Array.isArray(viewInvoice.items)
+                  ? viewInvoice.items
+                  : [];
 
-              <Separator />
-
-              {/* Payment Information */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-gray-700">Payment Information</h3>
-                <div className="space-y-2 pl-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-medium capitalize">
-                      {viewInvoice.invoiceDetails?.paymentMethod?.replace('_', ' ') || '-'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {viewInvoice.invoiceDetails?.notes && (
-                <>
-                  <Separator />
+                return (
                   <div className="space-y-3">
-                    <h3 className="font-semibold text-sm text-gray-700">Notes</h3>
-                    <div className="pl-6">
-                      <p className="text-sm text-gray-600">{viewInvoice.invoiceDetails.notes}</p>
+                    <h3 className="font-semibold text-sm text-gray-700">Invoice Items ({itemsArray.length})</h3>
+                    <div className="space-y-3 pl-6">
+                      {itemsArray.length > 0 ? (
+                        itemsArray.map((item: any) => (
+                          <div key={item.id} className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="font-semibold text-sm text-blue-900">
+                                  {item.productName || `Item #${item.id}`}
+                                </div>
+                                {item.description && (
+                                  <div className="text-xs text-blue-600 mt-1">
+                                    {item.description}
+                                  </div>
+                                )}
+                                {item.size && (
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    Size: {item.size}
+                                  </div>
+                                )}
+                                {item.stockId && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    Stock ID: {item.stockId}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex justify-between items-center text-sm border-t border-blue-300 pt-2 mt-2">
+                              <div className="text-gray-600">
+                                {item.quantity || 1} × ₦{parseFloat(item.cost || 0).toLocaleString()}
+                                {item.currency && ` ${item.currency}`}
+                              </div>
+                              <div className="font-bold text-brand-700">
+                                ₦{(parseFloat(item.cost || 0) * parseInt(item.quantity || 1)).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-sm text-gray-500 italic">No items in this invoice</div>
+                      )}
                     </div>
                   </div>
-                </>
-              )}
+                );
+              })()}
             </div>
           ) : (
             <div className="flex justify-center items-center min-h-[400px] text-gray-500">

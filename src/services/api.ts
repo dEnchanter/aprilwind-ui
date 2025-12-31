@@ -99,6 +99,8 @@ export const Endpoint = {
   CREATE_PRODUCT_FOR_PRODUCTION: "products-for-production",
   UPDATE_PRODUCT_FOR_PRODUCTION: (id: number) => `products-for-production/${id}`,
   DELETE_PRODUCT_FOR_PRODUCTION: (id: number) => `products-for-production/${id}`,
+  CANCEL_PRODUCT_FOR_PRODUCTION: (id: number) => `products-for-production/${id}/cancel`,
+  REACTIVATE_PRODUCT_FOR_PRODUCTION: (id: number) => `products-for-production/${id}/reactivate`,
   // Aliases
   CREATE_PRODUCT_IN_PRODUCTION: "products-for-production",
   UPDATE_PRODUCT_IN_PRODUCTION: (id: number) => `products-for-production/${id}`,
@@ -186,7 +188,7 @@ export const Endpoint = {
   GET_PRODUCTION_ORDER_ANALYTICS: "production-orders/analytics",
   APPROVE_PRODUCTION_ORDER: (id: number) => `production-orders/${id}/approve`,
   REJECT_PRODUCTION_ORDER: (id: number) => `production-orders/${id}/reject`,
-  ASSIGN_PRODUCTION_ORDER: (id: number) => `production-orders/${id}/assign-to-production`,
+  CREATE_PRODUCTION_FROM_ORDER: (id: number) => `production-orders/${id}/create-production`,
   COMPLETE_PRODUCTION_ORDER: (id: number) => `production-orders/${id}/complete`,
   DELIVER_PRODUCTION_ORDER: (id: number) => `production-orders/${id}/deliver`,
   CANCEL_PRODUCTION_ORDER: (id: number) => `production-orders/${id}/cancel`,

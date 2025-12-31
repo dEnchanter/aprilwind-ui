@@ -50,6 +50,11 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
   const { data: staffResponse, isLoading: staffLoading } = useStaff({ page: 1, limit: 100 });
   const staffs = staffResponse?.data || [];
 
+  // Filter to show only tailors
+  const tailors = staffs.filter((staff: any) =>
+    staff.role?.name?.toLowerCase() === 'tailor'
+  );
+
   // Fetch existing productions to check for duplicates
   const { data: existingProductionsResponse } = useProductionTracking({ page: 1, limit: 1000 });
   const existingProductions = existingProductionsResponse?.data || [];
@@ -170,6 +175,12 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
       return;
     }
 
+    // Find the quantity for the selected size
+    const selectedSizeData = selectedProductForProduction.quantity?.find(
+      (item: any) => item.size === data.size
+    );
+    const quantity = selectedSizeData?.quantity || 1;
+
     // Build payload according to backend DTO
     // Data Flow: ProductForProduction → MaterialRequest (approved) → Production
     // Production.prodRequestedId references MaterialRequest.id (not ProductForProduction.id)
@@ -177,6 +188,7 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
     const payload: CreateProductionRequest = {
       code: data.code,
       prodRequestedId: approvedMaterialRequest.id, // ✅ MaterialRequest ID (e.g., 9) NOT ProductForProduction ID
+      quantity: quantity, // Add quantity field for the selected size
       productInfo: {
         name: data.productName,
         size: data.size, // Use selected size from form
@@ -238,11 +250,13 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
                     </FormControl>
                     <SelectContent>
                       {productForProductionList && productForProductionList.length > 0 ? (
-                        productForProductionList.map((prod: any) => (
-                          <SelectItem key={prod.id} value={prod.id.toString()}>
-                            {prod.product?.name || `Product #${prod.id}`} - {prod.product?.code || 'N/A'}
-                          </SelectItem>
-                        ))
+                        productForProductionList
+                          .filter((prod: any) => prod.isActive !== false)
+                          .map((prod: any) => (
+                            <SelectItem key={prod.id} value={prod.id.toString()}>
+                              {prod.product?.name || `Product #${prod.id}`} - {prod.product?.code || 'N/A'}
+                            </SelectItem>
+                          ))
                       ) : (
                         <div className="p-2 text-xs text-gray-500 text-center">No products available</div>
                       )}
@@ -591,11 +605,15 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {staffs.map((staff: any) => (
-                          <SelectItem key={staff.id} value={staff.id.toString()}>
-                            {staff.staffName || `${staff.firstName || ''} ${staff.lastName || ''}`.trim() || 'Unknown'} ({staff.role?.name || "No Role"})
-                          </SelectItem>
-                        ))}
+                        {tailors.length > 0 ? (
+                          tailors.map((staff: any) => (
+                            <SelectItem key={staff.id} value={staff.id.toString()}>
+                              {staff.staffName || `${staff.firstName || ''} ${staff.lastName || ''}`.trim() || 'Unknown'}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-xs text-gray-500 text-center">No tailors found</div>
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500 mt-1">

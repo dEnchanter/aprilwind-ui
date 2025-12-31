@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
-import { useProductStock, useDeleteProductStock } from "@/hooks/useProductStock";
+import { useProductStock } from "@/hooks/useProductStock";
 import { useCreateInvoice, useGenerateInvoiceNumber } from "@/hooks/useInvoices";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { ProductStockTable } from "@/components/tables/ProductStockTable";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,23 +34,37 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Format number as currency with commas and 2 decimal places
+const formatCurrency = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const parseCurrency = (value: string): number => {
+  const cleaned = value.replace(/,/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
 export default function ProductStockPage() {
   const [page, setPage] = useState(1);
   const [filterTab, setFilterTab] = useState<'all' | 'available' | 'sold'>('all');
   const [searchTerm, setSearchTerm] = useState("");
-  const [deleteStock, setDeleteStock] = useState<any | null>(null);
   const [markAsSoldStock, setMarkAsSoldStock] = useState<any | null>(null);
   const [limit, setLimit] = useState(20);
 
   // Sale dialog fields
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [salePrice, setSalePrice] = useState<string>("");
+  const [salePriceDisplay, setSalePriceDisplay] = useState<string>("");
+  const [saleQuantity, setSaleQuantity] = useState<string>("1");
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [saleNotes, setSaleNotes] = useState<string>("");
 
   const { data: stockResponse, isLoading } = useProductStock({ page: 1, limit: 100 });
   const { data: customersResponse } = useCustomers({ page: 1, limit: 100 });
-  const deleteStockMutation = useDeleteProductStock();
   const createInvoiceMutation = useCreateInvoice();
   const generateInvoiceNumberMutation = useGenerateInvoiceNumber();
   const currentUser = useCurrentUser();
@@ -58,69 +73,106 @@ export default function ProductStockPage() {
 
   const allStocks = stockResponse?.data || [];
 
-  const handleEdit = useCallback((stock: any) => {
-    // TODO: Implement edit functionality
-    console.log('Edit stock:', stock);
-  }, []);
-
-  const handleDelete = useCallback((stock: any) => {
-    setDeleteStock(stock);
-  }, []);
-
   const handleMarkAsSold = useCallback((stock: any) => {
     setMarkAsSoldStock(stock);
-  }, []);
-
-  const confirmDelete = () => {
-    if (deleteStock?.id) {
-      deleteStockMutation.mutate(deleteStock.id, {
-        onSuccess: () => {
-          setDeleteStock(null);
-        },
-      });
+    // Auto-fill unit price from productDef.cost
+    if (stock?.productDef?.cost) {
+      const cost = stock.productDef.cost.toString();
+      setSalePrice(cost);
+      setSalePriceDisplay(formatCurrency(stock.productDef.cost));
     }
-  };
+  }, []);
 
   const confirmMarkAsSold = async () => {
     const customerIdNum = parseInt(selectedCustomerId);
     const salePriceNum = parseFloat(salePrice);
+    const saleQuantityNum = parseInt(saleQuantity);
 
-    if (!markAsSoldStock?.id || !selectedCustomerId || !customerIdNum || !salePriceNum) {
+    // Calculate available quantity
+    const totalQuantity = markAsSoldStock?.quantity || 0;
+    const quantitySold = markAsSoldStock?.quantitySold || 0;
+    const availableQuantity = totalQuantity - quantitySold;
+
+    console.log('confirmMarkAsSold called', {
+      markAsSoldStock: markAsSoldStock?.id,
+      selectedCustomerId,
+      customerIdNum,
+      salePrice,
+      salePriceNum,
+      saleQuantity,
+      saleQuantityNum,
+      totalQuantity,
+      quantitySold,
+      availableQuantity,
+      currentUser: currentUser.staffId
+    });
+
+    if (!markAsSoldStock?.id || !selectedCustomerId || !customerIdNum || !salePriceNum || !saleQuantityNum) {
+      console.error('Validation failed:', {
+        hasStockId: !!markAsSoldStock?.id,
+        hasCustomerId: !!selectedCustomerId,
+        hasValidCustomerIdNum: !!customerIdNum,
+        hasValidSalePrice: !!salePriceNum,
+        hasValidSaleQuantity: !!saleQuantityNum
+      });
+      return;
+    }
+
+    // Validate quantity
+    if (saleQuantityNum > availableQuantity) {
+      toast.error(`Only ${availableQuantity} units available. Cannot sell ${saleQuantityNum} units.`);
+      return;
+    }
+
+    if (saleQuantityNum < 1) {
+      toast.error('Quantity must be at least 1');
       return;
     }
 
     try {
       // Step 1: Generate invoice number
-      const invoiceNumberResponse = await generateInvoiceNumberMutation.mutateAsync();
-      const invoiceNo = invoiceNumberResponse?.invoiceNo || `INV-${Date.now()}`;
+      console.log('Generating invoice number...');
+      const invoiceNo = await generateInvoiceNumberMutation.mutateAsync();
+      console.log('Invoice number generated:', invoiceNo);
 
       // Step 2: Create invoice with product stock details
       const invoiceData = {
         invoiceNo,
         customerId: customerIdNum,
-        generatedById: currentUser.staffId || 1,
-        items: [  // API expects an array of invoice items
+        generatedBy: currentUser.staffId || 1,
+        status: 'open',
+        invoiceDetails: [
           {
-            productStockId: markAsSoldStock.id,
-            quantity: 1,  // Always 1 for product stock sales
-            unitPrice: salePriceNum,
+            id: markAsSoldStock.id,
+            size: markAsSoldStock.productInfo?.size || 0,
+            productName: markAsSoldStock.productInfo?.name || 'Product',
+            description: markAsSoldStock.productInfo?.details || `Product Stock ID: ${markAsSoldStock.id}`,
+            cost: salePriceNum.toString(),
+            currency: 'NGN',
+            quantity: saleQuantityNum,
           }
         ],
-        paymentMethod: paymentMethod || 'cash',
-        notes: saleNotes || undefined,
       };
+
+      console.log('Creating invoice with data:', invoiceData);
 
       createInvoiceMutation.mutate(invoiceData, {
         onSuccess: () => {
+          console.log('Invoice created successfully');
           setMarkAsSoldStock(null);
           setSelectedCustomerId("");
           setSalePrice("");
+          setSalePriceDisplay("");
+          setSaleQuantity("1");
           setPaymentMethod("cash");
           setSaleNotes("");
         },
+        onError: (error) => {
+          console.error('Error creating invoice:', error);
+        }
       });
     } catch (error) {
-      console.error('Error creating sale:', error);
+      console.error('Error in confirmMarkAsSold:', error);
     }
   };
 
@@ -347,38 +399,16 @@ export default function ProductStockPage() {
         limit={limit}
         onPageChange={setPage}
         onLimitChange={setLimit}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
         onMarkAsSold={handleMarkAsSold}
       />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteStock} onOpenChange={() => setDeleteStock(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product Stock</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this product stock entry? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteStockMutation.isPending}
-            >
-              {deleteStockMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* Create Sale/Invoice Dialog */}
       <AlertDialog open={!!markAsSoldStock} onOpenChange={() => {
         setMarkAsSoldStock(null);
         setSelectedCustomerId("");
         setSalePrice("");
+        setSalePriceDisplay("");
+        setSaleQuantity("1");
         setPaymentMethod("cash");
         setSaleNotes("");
       }}>
@@ -392,14 +422,27 @@ export default function ProductStockPage() {
 
           {markAsSoldStock && (
             <div className="space-y-4 py-4">
-              {/* Product Info */}
+              {/* Product Info with Availability */}
               <div className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                <p className="text-sm font-medium text-gray-900">
-                  {markAsSoldStock.productInfo?.name}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Size {markAsSoldStock.productInfo?.size} • {markAsSoldStock.productionCode}
-                </p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {markAsSoldStock.productInfo?.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Size {markAsSoldStock.productInfo?.size} • {markAsSoldStock.productionCode}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Available</p>
+                    <p className="text-sm font-bold text-green-600">
+                      {(markAsSoldStock.quantity || 0) - (markAsSoldStock.quantitySold || 0)} units
+                    </p>
+                    <p className="text-[10px] text-gray-400">
+                      of {markAsSoldStock.quantity || 0} total
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Customer Selection */}
@@ -423,18 +466,64 @@ export default function ProductStockPage() {
                 </Select>
               </div>
 
+              {/* Quantity */}
+              <div className="space-y-2">
+                <Label htmlFor="sale-quantity">Quantity *</Label>
+                <Input
+                  id="sale-quantity"
+                  type="number"
+                  min="1"
+                  max={(markAsSoldStock.quantity || 0) - (markAsSoldStock.quantitySold || 0)}
+                  placeholder="Enter quantity..."
+                  value={saleQuantity}
+                  onChange={(e) => setSaleQuantity(e.target.value)}
+                />
+                <p className="text-xs text-gray-500">
+                  Maximum: {(markAsSoldStock.quantity || 0) - (markAsSoldStock.quantitySold || 0)} units available
+                </p>
+              </div>
+
               {/* Sale Price */}
               <div className="space-y-2">
-                <Label htmlFor="sale-price">Sale Price *</Label>
+                <Label htmlFor="sale-price">Unit Price *</Label>
                 <Input
                   id="sale-price"
-                  type="number"
-                  step="0.01"
-                  placeholder="Enter sale price..."
-                  value={salePrice}
-                  onChange={(e) => setSalePrice(e.target.value)}
+                  type="text"
+                  placeholder="0.00"
+                  value={salePriceDisplay}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^\d.]/g, '');
+                    setSalePriceDisplay(value);
+                    const numericValue = parseFloat(value) || 0;
+                    setSalePrice(numericValue.toString());
+                  }}
+                  onBlur={(e) => {
+                    const numericValue = parseFloat(e.target.value.replace(/[^\d.]/g, '')) || 0;
+                    const formatted = formatCurrency(numericValue);
+                    setSalePriceDisplay(formatted);
+                    setSalePrice(numericValue.toString());
+                  }}
+                  onFocus={() => {
+                    const numericValue = parseCurrency(salePriceDisplay);
+                    setSalePriceDisplay(numericValue === 0 ? '' : numericValue.toString());
+                  }}
                 />
               </div>
+
+              {/* Total Price Display */}
+              {salePrice && saleQuantity && parseFloat(salePrice) > 0 && parseInt(saleQuantity) > 0 && (
+                <div className="p-3 bg-blue-50 rounded-md border border-blue-200">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-blue-900">Total Amount:</span>
+                    <span className="text-lg font-bold text-blue-700">
+                      ₦{formatCurrency(parseFloat(salePrice) * parseInt(saleQuantity))}
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-1">
+                    {parseInt(saleQuantity)} unit{parseInt(saleQuantity) > 1 ? 's' : ''} × ₦{formatCurrency(parseFloat(salePrice))}
+                  </p>
+                </div>
+              )}
 
               {/* Payment Method */}
               <div className="space-y-2">
@@ -471,7 +560,7 @@ export default function ProductStockPage() {
             <AlertDialogAction
               onClick={confirmMarkAsSold}
               className="bg-green-600 hover:bg-green-700"
-              disabled={!selectedCustomerId || !salePrice || createInvoiceMutation.isPending}
+              disabled={!selectedCustomerId || !salePrice || !saleQuantity || parseInt(saleQuantity) < 1 || createInvoiceMutation.isPending}
             >
               {createInvoiceMutation.isPending ? 'Creating Sale...' : 'Complete Sale'}
             </AlertDialogAction>

@@ -18,7 +18,7 @@ import {
   createProductionOrderSchema,
   CreateProductionOrderFormData,
 } from "@/schemas/productionOrderSchema";
-import { useCreateProductionOrder } from "@/hooks/useProductionOrders";
+import { useCreateProductionOrder, useUpdateProductionOrder } from "@/hooks/useProductionOrders";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useSizeDefs } from "@/hooks/useSizeDefs";
@@ -50,6 +50,8 @@ export default function ProductionOrderForm({
   const sizeDefs = sizeDefsResponse?.data || [];
 
   const createOrderMutation = useCreateProductionOrder();
+  const updateOrderMutation = useUpdateProductionOrder();
+  const isEditMode = !!initialValues?.id;
 
   const {
     register,
@@ -95,11 +97,24 @@ export default function ProductionOrderForm({
       receivedBy: currentUser.staffId,
     };
 
-    createOrderMutation.mutate(orderData as any, {
-      onSuccess: () => {
-        closeDialog();
-      },
-    });
+    if (isEditMode) {
+      // Update existing order
+      updateOrderMutation.mutate(
+        { id: initialValues.id, data: orderData as any },
+        {
+          onSuccess: () => {
+            closeDialog();
+          },
+        }
+      );
+    } else {
+      // Create new order
+      createOrderMutation.mutate(orderData as any, {
+        onSuccess: () => {
+          closeDialog();
+        },
+      });
+    }
   };
 
   return (
@@ -423,24 +438,24 @@ export default function ProductionOrderForm({
           type="button"
           variant="outline"
           onClick={closeDialog}
-          disabled={createOrderMutation.isPending}
+          disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          disabled={createOrderMutation.isPending}
+          disabled={createOrderMutation.isPending || updateOrderMutation.isPending}
           className="bg-brand-700 hover:bg-brand-800"
         >
-          {createOrderMutation.isPending ? (
+          {(createOrderMutation.isPending || updateOrderMutation.isPending) ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating Order...
+              {isEditMode ? "Updating Order..." : "Creating Order..."}
             </>
           ) : (
             <>
               <Plus className="mr-2 h-4 w-4" />
-              Create Production Order
+              {isEditMode ? "Update Production Order" : "Create Production Order"}
             </>
           )}
         </Button>

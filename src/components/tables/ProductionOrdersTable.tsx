@@ -34,11 +34,10 @@ interface ProductionOrdersTableProps {
   onEdit: (order: ProductionOrder) => void;
   onApprove: (order: ProductionOrder) => void;
   onReject: (order: ProductionOrder) => void;
-  onAssign: (order: ProductionOrder) => void;
+  onCreateProduction: (order: ProductionOrder) => void;
   onComplete: (order: ProductionOrder) => void;
   onDeliver: (order: ProductionOrder) => void;
   onCancel: (order: ProductionOrder) => void;
-  onDelete: (order: ProductionOrder) => void;
 }
 
 export function ProductionOrdersTable({
@@ -53,22 +52,20 @@ export function ProductionOrdersTable({
   onEdit,
   onApprove,
   onReject,
-  onAssign,
+  onCreateProduction,
   onComplete,
   onDeliver,
   onCancel,
-  onDelete,
 }: ProductionOrdersTableProps) {
   const columns = getColumns({
     onView,
     onEdit,
     onApprove,
     onReject,
-    onAssign,
+    onCreateProduction,
     onComplete,
     onDeliver,
     onCancel,
-    onDelete,
   });
 
   const table = useReactTable({
@@ -91,8 +88,7 @@ export function ProductionOrdersTable({
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Expected Delivery</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Priority</TableHead>
                   <TableHead className="px-6 py-4 font-semibold text-gray-700">Status</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Total Cost</TableHead>
-                  <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
+                  <TableHead className="px-6 py-4 font-semibold text-gray-700">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -104,7 +100,6 @@ export function ProductionOrdersTable({
                     <TableCell className="px-6 py-4"><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-20" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-6 w-24" /></TableCell>
-                    <TableCell className="px-6 py-4"><Skeleton className="h-5 w-28" /></TableCell>
                     <TableCell className="px-6 py-4"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                   </TableRow>
                 ))}

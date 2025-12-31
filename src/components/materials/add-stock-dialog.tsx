@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -41,9 +42,25 @@ interface AddStockDialogProps {
   onClose: () => void;
 }
 
+// Format number as currency with commas and 2 decimal places
+const formatCurrency = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Parse formatted currency string back to number
+const parseCurrency = (value: string): number => {
+  const cleaned = value.replace(/,/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
 export function AddStockDialog({ material, open, onClose }: AddStockDialogProps) {
   const addStock = useAddMaterialStock();
   const { data: user } = useMe();
+  const [unitCostDisplay, setUnitCostDisplay] = useState<string>("0.00");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -68,14 +85,23 @@ export function AddStockDialog({ material, open, onClose }: AddStockDialogProps)
       {
         onSuccess: () => {
           form.reset();
+          setUnitCostDisplay("0.00");
           onClose();
         },
       }
     );
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      form.reset();
+      setUnitCostDisplay("0.00");
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Add Stock - {material.itemName}</DialogTitle>
@@ -128,12 +154,26 @@ export function AddStockDialog({ material, open, onClose }: AddStockDialogProps)
                   <FormLabel>Unit Cost (Optional)</FormLabel>
                   <FormControl>
                     <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
+                      type="text"
                       placeholder="0.00"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      value={unitCostDisplay}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d.]/g, ''); // Allow only digits and decimal
+                        setUnitCostDisplay(value);
+                        const numericValue = parseFloat(value) || 0;
+                        field.onChange(numericValue);
+                      }}
+                      onBlur={(e) => {
+                        const numericValue = parseFloat(e.target.value.replace(/[^\d.]/g, '')) || 0;
+                        const formatted = formatCurrency(numericValue);
+                        setUnitCostDisplay(formatted);
+                        field.onChange(numericValue);
+                      }}
+                      onFocus={(e) => {
+                        // Remove formatting when focused for easier editing
+                        const numericValue = parseCurrency(unitCostDisplay);
+                        setUnitCostDisplay(numericValue === 0 ? '' : numericValue.toString());
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -159,7 +199,7 @@ export function AddStockDialog({ material, open, onClose }: AddStockDialogProps)
               <Button
                 type="button"
                 variant="outline"
-                onClick={onClose}
+                onClick={() => handleOpenChange(false)}
                 disabled={addStock.isPending}
               >
                 Cancel

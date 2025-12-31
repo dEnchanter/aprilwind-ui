@@ -3,7 +3,7 @@
 "use client"
 
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Package, TrendingUp, TrendingDown, Edit, Trash2, Plus, Settings } from "lucide-react";
+import { ArrowLeft, Package, TrendingUp, TrendingDown, Edit, Plus, Settings } from "lucide-react";
 import { useState } from "react";
 import { useMaterial, useMaterialTransactions } from "@/hooks/useMaterials";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { AddStockDialog } from "@/components/materials/add-stock-dialog";
 import { AdjustStockDialog } from "@/components/materials/adjust-stock-dialog";
 import { EditMaterialDialog } from "@/components/materials/edit-material-dialog";
-import { DeleteMaterialDialog } from "@/components/materials/delete-material-dialog";
 import {
   Table,
   TableBody,
@@ -33,7 +32,6 @@ export default function MaterialDetailsPage() {
   const [showAddStock, setShowAddStock] = useState(false);
   const [showAdjustStock, setShowAdjustStock] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
 
   if (materialLoading) {
     return (
@@ -133,10 +131,6 @@ export default function MaterialDetailsPage() {
             <Button onClick={() => setShowEdit(true)} variant="outline" size="sm">
               <Edit className="h-4 w-4 mr-2" />
               Edit
-            </Button>
-            <Button onClick={() => setShowDelete(true)} variant="destructive" size="sm">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
             </Button>
           </div>
         </div>
@@ -293,15 +287,6 @@ export default function MaterialDetailsPage() {
           material={material}
           open={showEdit}
           onClose={() => setShowEdit(false)}
-        />
-      )}
-      {showDelete && (
-        <DeleteMaterialDialog
-          material={material}
-          open={showDelete}
-          onClose={() => {
-            setShowDelete(false);
-          }}
         />
       )}
     </div>

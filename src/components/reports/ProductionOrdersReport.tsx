@@ -57,14 +57,14 @@ export const ProductionOrdersReport: React.FC<ProductionOrdersReportProps> = ({
         />
         <MetricCard
           title="Completed Revenue"
-          value={formatNairaCurrency(parseFloat(data.revenue.completed))}
+          value={formatNairaCurrency(data.revenue.completed)}
           icon={DollarSign}
           bgColor="bg-emerald-50"
           iconColor="text-emerald-600"
         />
         <MetricCard
           title="Pending Revenue"
-          value={formatNairaCurrency(parseFloat(data.revenue.pending))}
+          value={formatNairaCurrency(data.revenue.pending)}
           icon={Clock}
           bgColor="bg-amber-50"
           iconColor="text-amber-600"

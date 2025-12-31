@@ -153,7 +153,7 @@ export function ProductionOrderDetailsSidebar({
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-medium text-gray-900">{item.productName}</h4>
                     <Badge variant="outline" className="bg-green-50 text-green-700">
-                      ₦{item.estimatedCost?.toLocaleString()}
+                      ₦{Number(item.estimatedCost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
@@ -195,14 +195,14 @@ export function ProductionOrderDetailsSidebar({
               <div className="flex justify-between p-2 bg-gray-50 rounded">
                 <span className="text-gray-600">Estimated Total:</span>
                 <span className="font-medium">
-                  ₦{order.estimatedTotalCost?.toLocaleString()}
+                  ₦{Number(order.estimatedTotalCost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               {order.agreedTotalCost && (
                 <div className="flex justify-between p-2 bg-green-50 rounded">
                   <span className="text-green-700 font-medium">Agreed Total:</span>
                   <span className="text-green-900 font-bold">
-                    ₦{order.agreedTotalCost?.toLocaleString()}
+                    ₦{Number(order.agreedTotalCost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               )}

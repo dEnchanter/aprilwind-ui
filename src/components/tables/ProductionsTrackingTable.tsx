@@ -24,7 +24,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   MoreHorizontal,
   Eye,
-  Trash2,
   PackageX,
   UserPlus,
   FileCheck,
@@ -35,7 +34,6 @@ import {
 import { formatDate, cn } from "@/lib/utils";
 import {
   useProductionTracking,
-  useDeleteProductionTracking,
   useAssignTailor,
   useQAReview,
   useMoveProductionToStock,
@@ -112,7 +110,6 @@ export function ProductionsTrackingTable({
   const [limit, setLimit] = useState(20);
 
   const { data: productionsResponse, isLoading } = useProductionTracking({ page: 1, limit: 100 });
-  const deleteProductionMutation = useDeleteProductionTracking();
   const assignTailorMutation = useAssignTailor();
   const qaReviewMutation = useQAReview();
   const moveToStockMutation = useMoveProductionToStock();
@@ -124,8 +121,16 @@ export function ProductionsTrackingTable({
   const { data: staffResponse } = useStaff({ page: 1, limit: 100 });
   const staffs = staffResponse?.data || [];
 
+  // Check if current user is warehouse/inventory staff
+  const isWarehouseStaff = () => {
+    const roleName = currentUser.role?.name?.toLowerCase() || '';
+    return roleName.includes('warehouse') ||
+           roleName.includes('store') ||
+           roleName.includes('inventory') ||
+           roleName.includes('stock');
+  };
+
   // Dialog states
-  const [productionToDelete, setProductionToDelete] = useState<any>(null);
   const [assignTailorDialog, setAssignTailorDialog] = useState(false);
   const [productionToAssign, setProductionToAssign] = useState<any>(null);
   const [selectedTailorId, setSelectedTailorId] = useState<string>("");
@@ -162,14 +167,6 @@ export function ProductionsTrackingTable({
 
   const totalPages = Math.ceil(filteredData.length / limit);
   const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
-
-  const confirmDelete = () => {
-    if (productionToDelete) {
-      deleteProductionMutation.mutate(productionToDelete.id, {
-        onSuccess: () => setProductionToDelete(null),
-      });
-    }
-  };
 
   const confirmAssignTailor = () => {
     const tailorIdNum = parseInt(selectedTailorId);
@@ -217,8 +214,12 @@ export function ProductionsTrackingTable({
   };
 
   const confirmMoveToStock = () => {
-    const receivedByIdNum = parseInt(receivedById);
-    if (productionForStock && currentUser.staffId && receivedById && receivedByIdNum > 0) {
+    // If current user is warehouse staff, use their ID; otherwise use selected ID
+    const receivedByIdNum = isWarehouseStaff() && currentUser.staffId
+      ? currentUser.staffId
+      : parseInt(receivedById);
+
+    if (productionForStock && currentUser.staffId && receivedByIdNum > 0) {
       moveToStockMutation.mutate({
         id: productionForStock.id,
         data: {
@@ -508,15 +509,6 @@ export function ProductionsTrackingTable({
                               )}
                             </>
                           )}
-
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setProductionToDelete(production)}
-                            className="text-red-600 cursor-pointer focus:text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -593,28 +585,6 @@ export function ProductionsTrackingTable({
         </div>
       )}
 
-      {/* Delete Dialog */}
-      <AlertDialog open={!!productionToDelete} onOpenChange={() => setProductionToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Production</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this production? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteProductionMutation.isPending}
-            >
-              {deleteProductionMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Assign Tailor Dialog */}
       <AlertDialog open={assignTailorDialog} onOpenChange={setAssignTailorDialog}>
         <AlertDialogContent>
@@ -633,13 +603,15 @@ export function ProductionsTrackingTable({
                 </SelectTrigger>
                 <SelectContent>
                   {staffs && staffs.length > 0 ? (
-                    staffs.map((staff: any) => (
-                      <SelectItem key={staff.id} value={staff.id.toString()}>
-                        {staff.staffName} - {staff.role?.name || 'No Role'}
-                      </SelectItem>
-                    ))
+                    staffs
+                      .filter((staff: any) => staff.role?.name?.toLowerCase() === 'tailor')
+                      .map((staff: any) => (
+                        <SelectItem key={staff.id} value={staff.id.toString()}>
+                          {staff.staffName}
+                        </SelectItem>
+                      ))
                   ) : (
-                    <div className="p-2 text-xs text-gray-500 text-center">No staff available</div>
+                    <div className="p-2 text-xs text-gray-500 text-center">No tailors found</div>
                   )}
                 </SelectContent>
               </Select>
@@ -736,22 +708,49 @@ export function ProductionsTrackingTable({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="received-by">Received By *</Label>
-              <Select value={receivedById || undefined} onValueChange={(value) => setReceivedById(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select staff" />
-                </SelectTrigger>
-                <SelectContent>
-                  {staffs && staffs.length > 0 ? (
-                    staffs.map((staff: any) => (
-                      <SelectItem key={staff.id} value={staff.id.toString()}>
-                        {staff.staffName}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-xs text-gray-500 text-center">No staff available</div>
-                  )}
-                </SelectContent>
-              </Select>
+              {isWarehouseStaff() ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm text-blue-900">
+                        {currentUser.staffName || 'Current User'}
+                      </div>
+                      <div className="text-xs text-blue-700 mt-0.5">
+                        {currentUser.role?.name || 'Warehouse Staff'}
+                      </div>
+                    </div>
+                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <p className="text-xs text-blue-600 mt-2">
+                    As warehouse/inventory staff, you will be recorded as receiving this stock.
+                  </p>
+                </div>
+              ) : (
+                <Select value={receivedById || undefined} onValueChange={(value) => setReceivedById(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select warehouse staff" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staffs && staffs.length > 0 ? (
+                      staffs
+                        .filter((staff: any) => {
+                          const roleName = staff.role?.name?.toLowerCase() || '';
+                          return roleName.includes('warehouse') ||
+                                 roleName.includes('store') ||
+                                 roleName.includes('inventory') ||
+                                 roleName.includes('stock');
+                        })
+                        .map((staff: any) => (
+                          <SelectItem key={staff.id} value={staff.id.toString()}>
+                            {staff.staffName}
+                          </SelectItem>
+                        ))
+                    ) : (
+                      <div className="p-2 text-xs text-gray-500 text-center">No warehouse/inventory staff available</div>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="stock-notes">Notes</Label>
@@ -768,7 +767,7 @@ export function ProductionsTrackingTable({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmMoveToStock}
-              disabled={!receivedById || moveToStockMutation.isPending}
+              disabled={(!isWarehouseStaff() && !receivedById) || moveToStockMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
               {moveToStockMutation.isPending ? 'Moving...' : 'Move to Stock'}

@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 export const productDefSchema = z.object({
-  code: z.string().min(1, "Product code is required").max(10, "Code must be 10 characters or less"),
+  code: z.string().length(4, "Product code must be exactly 4 characters"),
   name: z.string().min(1, "Product name is required"),
   cost: z.number().min(0, "Cost must be greater than or equal to 0"),
   def: z.array(z.object({

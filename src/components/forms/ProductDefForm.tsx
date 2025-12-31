@@ -22,6 +22,21 @@ import { useMaterials } from "@/hooks/useMaterials";
 import { useSizeDefs } from "@/hooks/useSizeDefs";
 import { Loader2, Plus, X } from "lucide-react";
 
+// Format number as currency with commas and 2 decimal places
+const formatCurrency = (value: number | string): string => {
+  const numValue = typeof value === 'string' ? parseFloat(value) || 0 : value;
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// Parse formatted currency string back to number
+const parseCurrency = (value: string): number => {
+  const cleaned = value.replace(/,/g, '');
+  return parseFloat(cleaned) || 0;
+};
+
 interface ProductDefFormProps extends React.ComponentProps<"form"> {
   closeDialog: () => void;
   initialValues?: Partial<ProductDef>;
@@ -36,8 +51,11 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
   const { data: sizeDefsResponse, isLoading: sizeDefsLoading } = useSizeDefs();
   const sizeDefs = sizeDefsResponse?.data || [];
   const [sizePopoverOpen, setSizePopoverOpen] = useState(false);
+  const [costDisplay, setCostDisplay] = useState<string>(formatCurrency(initialValues?.cost || 0));
 
-  const isEditing = !!initialValues?.id;
+  // Handle both 'id' and 'productId' from API response
+  const productId = (initialValues as any)?.id || (initialValues as any)?.productId;
+  const isEditing = !!productId;
   const isLoading = createProductDef.isPending || updateProductDef.isPending;
 
   const form = useForm<z.infer<typeof productDefSchema>>({
@@ -71,10 +89,13 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
         }))
       : [];
 
+    const costValue = initialValues?.cost || 0;
+    setCostDisplay(formatCurrency(costValue));
+
     form.reset({
       code: initialValues?.code || "",
       name: initialValues?.name || "",
-      cost: initialValues?.cost || 0,
+      cost: costValue,
       def: transformedDef,
       productSizes: initialValues?.productSizes && Array.isArray(initialValues.productSizes)
         ? initialValues.productSizes
@@ -94,19 +115,21 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
     // Transform data to match API expectations and filter out invalid entries
     const transformedData = {
       ...data,
+      code: data.code.toUpperCase(), // Ensure code is uppercase
       def: data.def.filter(d => d.item > 0 && d.qty > 0).map(d => ({
         item: d.item,
         qty: d.qty,
       })),
     };
 
-    if (isEditing && initialValues?.id) {
+    if (isEditing && productId) {
       updateProductDef.mutate(
-        { id: initialValues.id, data: transformedData },
+        { id: productId, data: transformedData },
         {
           onSuccess: () => {
             closeDialog();
             form.reset();
+            setCostDisplay("0.00");
           },
         }
       );
@@ -115,6 +138,7 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
         onSuccess: () => {
           closeDialog();
           form.reset();
+          setCostDisplay("0.00");
         },
       });
     }
@@ -151,12 +175,17 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
                 name="code"
                 render={({ field, fieldState: { error } }) => (
                   <div>
-                    <Label className="text-xs">Product Code *</Label>
+                    <Label className="text-xs">Product Code * (4 characters)</Label>
                     <FormControl>
                       <Input
                         placeholder="e.g., SHRT"
-                        maxLength={10}
+                        maxLength={4}
                         {...field}
+                        onChange={(e) => {
+                          const upperValue = e.target.value.toUpperCase();
+                          field.onChange(upperValue);
+                        }}
+                        style={{ textTransform: 'uppercase' }}
                       />
                     </FormControl>
                     {error && <FormMessage className="text-red-600 text-xs p-1">{error.message}</FormMessage>}
@@ -189,10 +218,26 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
                     <Label className="text-xs">Production Cost *</Label>
                     <FormControl>
                       <Input
-                        type="number"
-                        placeholder="5000"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        type="text"
+                        placeholder="0.00"
+                        value={costDisplay}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^\d.]/g, ''); // Allow only digits and decimal
+                          setCostDisplay(value);
+                          const numericValue = parseFloat(value) || 0;
+                          field.onChange(numericValue);
+                        }}
+                        onBlur={(e) => {
+                          const numericValue = parseFloat(e.target.value.replace(/[^\d.]/g, '')) || 0;
+                          const formatted = formatCurrency(numericValue);
+                          setCostDisplay(formatted);
+                          field.onChange(numericValue);
+                        }}
+                        onFocus={(e) => {
+                          // Remove formatting when focused for easier editing
+                          const numericValue = parseCurrency(costDisplay);
+                          setCostDisplay(numericValue === 0 ? '' : numericValue.toString());
+                        }}
                       />
                     </FormControl>
                     {error && <FormMessage className="text-red-600 text-xs p-1">{error.message}</FormMessage>}
@@ -396,6 +441,7 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
               onClick={() => {
                 closeDialog();
                 form.reset();
+                setCostDisplay("0.00");
               }}
               disabled={isLoading}
             >

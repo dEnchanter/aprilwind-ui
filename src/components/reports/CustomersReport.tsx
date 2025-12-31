@@ -64,7 +64,7 @@ export const CustomersReport: React.FC<CustomersReportProps> = ({
         />
         <MetricCard
           title="Total Revenue"
-          value={formatNairaCurrency(parseFloat(data.summary.totalRevenue))}
+          value={formatNairaCurrency(data.summary.totalRevenue)}
           icon={DollarSign}
           bgColor="bg-emerald-50"
           iconColor="text-emerald-600"
@@ -150,7 +150,7 @@ export const CustomersReport: React.FC<CustomersReportProps> = ({
                         <td className="py-3 px-4 text-sm text-gray-600">{customer.phone || '-'}</td>
                       )}
                       <td className="py-3 px-4 text-sm font-medium text-emerald-600">
-                        {formatNairaCurrency(parseFloat(customer.totalSpent))}
+                        {formatNairaCurrency(customer.totalSpent)}
                       </td>
                       <td className="py-3 px-4 text-sm">{customer.invoiceCount}</td>
                     </tr>

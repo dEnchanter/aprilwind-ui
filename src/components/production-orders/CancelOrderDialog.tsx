@@ -45,9 +45,9 @@ export function CancelOrderDialog({ order, open, onClose }: CancelOrderDialogPro
       {
         id: order.id,
         data: {
-          ...data,
           cancelledBy: currentUser.staffId,
-        } as any,
+          reason: data.reason,
+        },
       },
       {
         onSuccess: () => {
@@ -94,23 +94,12 @@ export function CancelOrderDialog({ order, open, onClose }: CancelOrderDialogPro
             <Textarea
               id="reason"
               placeholder="Why is this order being cancelled?"
-              rows={4}
+              rows={6}
               {...register("reason")}
             />
             {errors.reason && (
               <p className="text-sm text-red-600">{errors.reason.message}</p>
             )}
-          </div>
-
-          {/* Additional Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Additional Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional information..."
-              rows={2}
-              {...register("notes")}
-            />
           </div>
 
           <AlertDialogFooter>

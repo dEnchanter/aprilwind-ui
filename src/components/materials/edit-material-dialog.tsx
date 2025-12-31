@@ -28,7 +28,6 @@ import { useUpdateMaterial } from "@/hooks/useMaterials";
 const formSchema = z.object({
   name: z.string().min(1, "Material name is required"),
   code: z.string().optional(),
-  minStockLevel: z.number().min(0).optional(),
   description: z.string().optional(),
 });
 
@@ -48,7 +47,6 @@ export function EditMaterialDialog({ material, open, onClose }: EditMaterialDial
     defaultValues: {
       name: material.name || "",
       code: material.code || "",
-      minStockLevel: material.minStockLevel || 10,
       description: material.description || "",
     },
   });
@@ -59,7 +57,6 @@ export function EditMaterialDialog({ material, open, onClose }: EditMaterialDial
       form.reset({
         name: material.name || "",
         code: material.code || "",
-        minStockLevel: material.minStockLevel || 10,
         description: material.description || "",
       });
     }
@@ -113,25 +110,6 @@ export function EditMaterialDialog({ material, open, onClose }: EditMaterialDial
                   <FormLabel>Item Code</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., CTN-001" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="minStockLevel"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Min Stock Level</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 10)}
-                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

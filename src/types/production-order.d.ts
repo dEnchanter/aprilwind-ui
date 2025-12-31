@@ -129,17 +129,18 @@ export interface ApproveOrderData {
 }
 
 export interface RejectOrderData {
+  rejectedBy: number;
   reason: string;
-  notes?: string;
 }
 
 export interface CancelOrderData {
+  cancelledBy: number;
   reason: string;
-  notes?: string;
 }
 
 export interface AssignToProductionData {
   productionId: number;
+  assignedBy: number;
   notes?: string;
 }
 

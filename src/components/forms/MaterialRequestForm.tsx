@@ -30,6 +30,12 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
   const updateMaterialRequest = useUpdateMaterialRequest();
   const { data: staffResponse, isLoading: staffsIsLoading } = useStaff({ page: 1, limit: 100 });
   const staffs = staffResponse?.data || [];
+
+  // Filter to show only tailors for requester dropdown
+  const tailors = staffs.filter((staff: any) =>
+    staff.role?.name?.toLowerCase() === 'tailor'
+  );
+
   const currentUser = useCurrentUser();
 
   // Fetch productions
@@ -45,7 +51,7 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
   const form = useForm<z.infer<typeof materialRequestSchema>>({
     resolver: zodResolver(materialRequestSchema),
     defaultValues: {
-      requesterId: initialValues?.requesterId || currentUser.staffId || 0,
+      requesterId: initialValues?.requesterId || (canSelectOtherRequesters ? 0 : currentUser.staffId || 0),
       materials: initialValues?.materials && Array.isArray(initialValues.materials)
         ? initialValues.materials
         : [],
@@ -69,11 +75,11 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
           ? initialValues.quantity
           : [],
       });
-    } else if (currentUser.staffId) {
-      // Auto-fill requester with current user for new requests
+    } else if (currentUser.staffId && !canSelectOtherRequesters) {
+      // Auto-fill requester with current user for new requests (only if they can't select others)
       form.setValue('requesterId', currentUser.staffId);
     }
-  }, [initialValues, currentUser.staffId, form]);
+  }, [initialValues, currentUser.staffId, canSelectOtherRequesters, form]);
 
   // Auto-populate quantity and materials when production is selected
   const selectedProductionId = form.watch('productionId');
@@ -161,7 +167,7 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
                 <div>
                   <Label className="text-xs">Requester *</Label>
                   {canSelectOtherRequesters ? (
-                    // Supervisors/Managers can select any staff member
+                    // Supervisors/Managers can select any tailor
                     <Select
                       value={field.value && field.value > 0 ? field.value.toString() : ""}
                       onValueChange={(value) => field.onChange(parseInt(value))}
@@ -169,15 +175,19 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
                     >
                       <FormControl>
                         <SelectTrigger className={field.value && field.value > 0 ? 'font-medium' : ''}>
-                          <SelectValue placeholder="Select requester" />
+                          <SelectValue placeholder="Select tailor" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {staffs.map((staff: any) => (
-                          <SelectItem key={staff.id} value={staff.id.toString()}>
-                            {staff.staffName || `${staff.firstName || ''} ${staff.lastName || ''}`.trim() || 'Unknown'} ({staff.role?.name || "No Role"})
-                          </SelectItem>
-                        ))}
+                        {tailors.length > 0 ? (
+                          tailors.map((staff: any) => (
+                            <SelectItem key={staff.id} value={staff.id.toString()}>
+                              {staff.staffName || `${staff.firstName || ''} ${staff.lastName || ''}`.trim() || 'Unknown'}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-xs text-gray-500 text-center">No tailors found</div>
+                        )}
                       </SelectContent>
                     </Select>
                   ) : (

@@ -25,9 +25,11 @@ import {
   MoreHorizontal,
   Eye,
   Edit,
-  Trash2,
   ClipboardX,
   Clock,
+  CheckCircle,
+  XCircle,
+  Ban,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import {
@@ -39,7 +41,23 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Package, Calendar } from "lucide-react";
-import { useMaterialRequest } from "@/hooks/useMaterialRequest";
+import {
+  useMaterialRequest,
+  useApproveMaterialRequest,
+  useRejectMaterialRequest,
+  useCancelMaterialRequest,
+} from "@/hooks/useMaterialRequest";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface MaterialRequestsTableProps {
   data: any[];
@@ -49,7 +67,6 @@ interface MaterialRequestsTableProps {
   onPageChange: (page: number) => void;
   onLimitChange: (limit: number) => void;
   onEdit: (request: any) => void;
-  onDelete: (request: any) => void;
 }
 
 export function MaterialRequestsTable({
@@ -60,10 +77,23 @@ export function MaterialRequestsTable({
   onPageChange,
   onLimitChange,
   onEdit,
-  onDelete,
 }: MaterialRequestsTableProps) {
   const [viewSidebarOpen, setViewSidebarOpen] = useState(false);
   const [viewRequestId, setViewRequestId] = useState<number | null>(null);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [approvalNotes, setApprovalNotes] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionNotes, setRejectionNotes] = useState("");
+  const [cancellationReason, setCancellationReason] = useState("");
+  const [cancellationNotes, setCancellationNotes] = useState("");
+
+  const currentUser = useCurrentUser();
+  const approveMutation = useApproveMaterialRequest();
+  const rejectMutation = useRejectMaterialRequest();
+  const cancelMutation = useCancelMaterialRequest();
 
   // Fetch detailed material request when viewing
   const { data: viewRequestData, isLoading: viewRequestLoading } = useMaterialRequest(viewRequestId || 0);
@@ -72,6 +102,88 @@ export function MaterialRequestsTable({
   const handleView = (request: any) => {
     setViewRequestId(request.id);
     setViewSidebarOpen(true);
+  };
+
+  const handleApproveClick = (request: any) => {
+    setSelectedRequest(request);
+    setApprovalNotes("");
+    setApproveDialogOpen(true);
+  };
+
+  const handleRejectClick = (request: any) => {
+    setSelectedRequest(request);
+    setRejectionReason("");
+    setRejectionNotes("");
+    setRejectDialogOpen(true);
+  };
+
+  const handleCancelClick = (request: any) => {
+    setSelectedRequest(request);
+    setCancellationReason("");
+    setCancellationNotes("");
+    setCancelDialogOpen(true);
+  };
+
+  const handleApprove = () => {
+    if (selectedRequest && currentUser.staffId) {
+      approveMutation.mutate(
+        {
+          id: selectedRequest.id,
+          approverId: currentUser.staffId,
+          deductFromStock: true,
+          notes: approvalNotes,
+        },
+        {
+          onSuccess: () => {
+            setApproveDialogOpen(false);
+            setSelectedRequest(null);
+            setApprovalNotes("");
+          },
+        }
+      );
+    }
+  };
+
+  const handleReject = () => {
+    if (selectedRequest && rejectionReason.trim() && currentUser.staffId) {
+      rejectMutation.mutate(
+        {
+          id: selectedRequest.id,
+          rejectedBy: currentUser.staffId,
+          reason: rejectionReason,
+          notes: rejectionNotes,
+        },
+        {
+          onSuccess: () => {
+            setRejectDialogOpen(false);
+            setSelectedRequest(null);
+            setRejectionReason("");
+            setRejectionNotes("");
+          },
+        }
+      );
+    }
+  };
+
+  const handleCancel = () => {
+    if (selectedRequest && cancellationReason.trim() && currentUser.staffId) {
+      cancelMutation.mutate(
+        {
+          id: selectedRequest.id,
+          cancelledBy: currentUser.staffId,
+          reason: cancellationReason,
+          notes: cancellationNotes,
+        },
+        {
+          onSuccess: () => {
+            setCancelDialogOpen(false);
+            setSelectedRequest(null);
+            setCancellationReason("");
+            setCancellationNotes("");
+          },
+        }
+      );
+    }
   };
 
   const totalPages = Math.ceil(data.length / limit);
@@ -207,6 +319,35 @@ export function MaterialRequestsTable({
                             <Eye className="mr-2 h-4 w-4 text-gray-500" />
                             View Details
                           </DropdownMenuItem>
+
+                          {/* Show Approve/Reject/Cancel only for pending requests */}
+                          {status === 'pending' && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleApproveClick(request)}
+                                className="cursor-pointer text-green-600 focus:text-green-600"
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleRejectClick(request)}
+                                className="cursor-pointer text-red-600 focus:text-red-600"
+                              >
+                                <XCircle className="mr-2 h-4 w-4" />
+                                Reject
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleCancelClick(request)}
+                                className="cursor-pointer text-orange-600 focus:text-orange-600"
+                              >
+                                <Ban className="mr-2 h-4 w-4" />
+                                Cancel Request
+                              </DropdownMenuItem>
+                            </>
+                          )}
+
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => onEdit(request)}
@@ -214,13 +355,6 @@ export function MaterialRequestsTable({
                           >
                             <Edit className="mr-2 h-4 w-4 text-gray-500" />
                             Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDelete(request)}
-                            className="text-red-600 cursor-pointer focus:text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -454,6 +588,228 @@ export function MaterialRequestsTable({
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Approve Material Request Dialog */}
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Approve Material Request</DialogTitle>
+            <DialogDescription>
+              Approve this material request and deduct materials from stock.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {selectedRequest && (
+              <div className="space-y-2">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-gray-600">Requester:</span>
+                      <span className="font-medium">{selectedRequest.requester?.staffName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Materials:</span>
+                      <span className="font-medium">{selectedRequest.materials?.length || 0} items</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="approval-notes" className="text-xs">
+                Notes (Optional)
+              </Label>
+              <Textarea
+                id="approval-notes"
+                placeholder="Add any approval notes..."
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="text-xs text-amber-800">
+                <strong>Note:</strong> Approving this request will automatically deduct the requested materials from stock.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setApproveDialogOpen(false)}
+              disabled={approveMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApprove}
+              disabled={approveMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {approveMutation.isPending ? 'Approving...' : 'Approve Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Material Request Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Reject Material Request</DialogTitle>
+            <DialogDescription>
+              Reject this material request and provide a reason.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {selectedRequest && (
+              <div className="space-y-2">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-gray-600">Requester:</span>
+                      <span className="font-medium">{selectedRequest.requester?.staffName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Materials:</span>
+                      <span className="font-medium">{selectedRequest.materials?.length || 0} items</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason" className="text-xs">
+                Reason for Rejection *
+              </Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="e.g., Insufficient stock, Invalid request..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={2}
+                className="resize-none"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="rejection-notes" className="text-xs">
+                Additional Notes (Optional)
+              </Label>
+              <Textarea
+                id="rejection-notes"
+                placeholder="Add any additional details..."
+                value={rejectionNotes}
+                onChange={(e) => setRejectionNotes(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(false)}
+              disabled={rejectMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReject}
+              disabled={rejectMutation.isPending || !rejectionReason.trim()}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {rejectMutation.isPending ? 'Rejecting...' : 'Reject Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Material Request Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Cancel Material Request</DialogTitle>
+            <DialogDescription>
+              Cancel this material request and provide a reason.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {selectedRequest && (
+              <div className="space-y-2">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="text-sm">
+                    <div className="flex justify-between mb-1">
+                      <span className="text-gray-600">Requester:</span>
+                      <span className="font-medium">{selectedRequest.requester?.staffName || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Materials:</span>
+                      <span className="font-medium">{selectedRequest.materials?.length || 0} items</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="cancellation-reason" className="text-xs">
+                Reason for Cancellation *
+              </Label>
+              <Textarea
+                id="cancellation-reason"
+                placeholder="e.g., No longer needed, Duplicate request..."
+                value={cancellationReason}
+                onChange={(e) => setCancellationReason(e.target.value)}
+                rows={2}
+                className="resize-none"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="cancellation-notes" className="text-xs">
+                Additional Notes (Optional)
+              </Label>
+              <Textarea
+                id="cancellation-notes"
+                placeholder="Add any additional details..."
+                value={cancellationNotes}
+                onChange={(e) => setCancellationNotes(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={cancelMutation.isPending}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={handleCancel}
+              disabled={cancelMutation.isPending || !cancellationReason.trim()}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {cancelMutation.isPending ? 'Cancelling...' : 'Cancel Request'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

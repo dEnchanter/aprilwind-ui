@@ -95,7 +95,7 @@ export const BusinessReport: React.FC<BusinessReportProps> = ({
               <div className="p-4 bg-emerald-50 rounded-lg">
                 <p className="text-xs font-medium text-gray-600 mb-1">Total Revenue</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatNairaCurrency(parseFloat(data.sales.totalRevenue))}
+                  {formatNairaCurrency(data.sales.totalRevenue)}
                 </p>
               </div>
               <div className="p-4 bg-blue-50 rounded-lg">
@@ -105,7 +105,7 @@ export const BusinessReport: React.FC<BusinessReportProps> = ({
               <div className="p-4 bg-purple-50 rounded-lg">
                 <p className="text-xs font-medium text-gray-600 mb-1">Avg Order Value</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatNairaCurrency(parseFloat(data.sales.averageOrderValue))}
+                  {formatNairaCurrency(data.sales.averageOrderValue)}
                 </p>
               </div>
             </div>
@@ -209,7 +209,7 @@ export const BusinessReport: React.FC<BusinessReportProps> = ({
                 <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
                   <span className="text-sm font-medium text-gray-700">Total Revenue</span>
                   <span className="text-lg font-bold text-gray-900">
-                    {formatNairaCurrency(parseFloat(data.customers.totalRevenue))}
+                    {formatNairaCurrency(data.customers.totalRevenue)}
                   </span>
                 </div>
               </div>

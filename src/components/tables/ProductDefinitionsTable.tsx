@@ -20,18 +20,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, Edit, Trash2, PackageX, Eye } from "lucide-react";
-import { useProductDef, useDeleteProductDef } from "@/hooks/useProductDef";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { MoreHorizontal, Edit, PackageX, Eye } from "lucide-react";
+import { useProductDef } from "@/hooks/useProductDef";
 
 interface ProductDefinitionsTableProps {
   searchTerm: string;
@@ -48,10 +38,8 @@ export function ProductDefinitionsTable({
   const [limit, setLimit] = useState(20);
 
   const { data: productDefsResponse, isLoading } = useProductDef({ page: 1, limit: 100 });
-  const deleteProductDefMutation = useDeleteProductDef();
 
   const allProductDefs = productDefsResponse || [];
-  const [productDefToDelete, setProductDefToDelete] = useState<any>(null);
 
   // Filter by search
   const filteredData = searchTerm
@@ -63,14 +51,6 @@ export function ProductDefinitionsTable({
 
   const totalPages = Math.ceil(filteredData.length / limit);
   const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
-
-  const confirmDelete = () => {
-    if (productDefToDelete) {
-      deleteProductDefMutation.mutate(productDefToDelete.id, {
-        onSuccess: () => setProductDefToDelete(null),
-      });
-    }
-  };
 
   if (isLoading) {
     return (
@@ -189,13 +169,6 @@ export function ProductDefinitionsTable({
                           <Edit className="mr-2 h-4 w-4 text-gray-500" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setProductDefToDelete(productDef)}
-                          className="text-red-600 cursor-pointer focus:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -270,28 +243,6 @@ export function ProductDefinitionsTable({
           </div>
         </div>
       )}
-
-      {/* Delete Dialog */}
-      <AlertDialog open={!!productDefToDelete} onOpenChange={() => setProductDefToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Product Definition</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this product definition? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteProductDefMutation.isPending}
-            >
-              {deleteProductDefMutation.isPending ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

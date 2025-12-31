@@ -45,9 +45,9 @@ export function RejectOrderDialog({ order, open, onClose }: RejectOrderDialogPro
       {
         id: order.id,
         data: {
-          ...data,
           rejectedBy: currentUser.staffId,
-        } as any,
+          reason: data.reason,
+        },
       },
       {
         onSuccess: () => {
@@ -84,23 +84,12 @@ export function RejectOrderDialog({ order, open, onClose }: RejectOrderDialogPro
             <Textarea
               id="reason"
               placeholder="Why is this order being rejected?"
-              rows={4}
+              rows={6}
               {...register("reason")}
             />
             {errors.reason && (
               <p className="text-sm text-red-600">{errors.reason.message}</p>
             )}
-          </div>
-
-          {/* Additional Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Additional Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional information..."
-              rows={2}
-              {...register("notes")}
-            />
           </div>
 
           <AlertDialogFooter>
