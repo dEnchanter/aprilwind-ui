@@ -25,6 +25,8 @@ import {
   Link2,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 // Status badge renderer
 export const getStatusBadge = (status: ProductionOrderStatus) => {
@@ -212,85 +214,99 @@ export const getColumns = ({
             </DropdownMenuItem>
 
             {canEdit && (
-              <DropdownMenuItem onClick={() => onEdit(order)} className="cursor-pointer">
-                <Edit className="mr-2 h-4 w-4" />
-                Edit Order
-              </DropdownMenuItem>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_EDIT}>
+                <DropdownMenuItem onClick={() => onEdit(order)} className="cursor-pointer">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Order
+                </DropdownMenuItem>
+              </PermissionGuard>
             )}
 
             {canApprove && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onApprove(order)}
-                  className="cursor-pointer text-green-600"
-                >
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Approve Order
-                </DropdownMenuItem>
-              </>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_APPROVE}>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onApprove(order)}
+                    className="cursor-pointer text-green-600"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Approve Order
+                  </DropdownMenuItem>
+                </>
+              </PermissionGuard>
             )}
 
             {canReject && (
-              <DropdownMenuItem
-                onClick={() => onReject(order)}
-                className="cursor-pointer text-red-600"
-              >
-                <XCircle className="mr-2 h-4 w-4" />
-                Reject Order
-              </DropdownMenuItem>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_REJECT}>
+                <DropdownMenuItem
+                  onClick={() => onReject(order)}
+                  className="cursor-pointer text-red-600"
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Reject Order
+                </DropdownMenuItem>
+              </PermissionGuard>
             )}
 
             {canCreateProduction && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onCreateProduction(order)}
-                  className="cursor-pointer text-blue-600"
-                >
-                  <Link2 className="mr-2 h-4 w-4" />
-                  Create Production
-                </DropdownMenuItem>
-              </>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_ASSIGN_PRODUCTION}>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onCreateProduction(order)}
+                    className="cursor-pointer text-blue-600"
+                  >
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Create Production
+                  </DropdownMenuItem>
+                </>
+              </PermissionGuard>
             )}
 
             {canComplete && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onComplete(order)}
-                  className="cursor-pointer text-green-600"
-                >
-                  <ClipboardCheck className="mr-2 h-4 w-4" />
-                  Mark as Completed
-                </DropdownMenuItem>
-              </>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_COMPLETE}>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onComplete(order)}
+                    className="cursor-pointer text-green-600"
+                  >
+                    <ClipboardCheck className="mr-2 h-4 w-4" />
+                    Mark as Completed
+                  </DropdownMenuItem>
+                </>
+              </PermissionGuard>
             )}
 
             {canDeliver && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onDeliver(order)}
-                  className="cursor-pointer text-green-600"
-                >
-                  <Truck className="mr-2 h-4 w-4" />
-                  Mark as Delivered
-                </DropdownMenuItem>
-              </>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_DELIVER}>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDeliver(order)}
+                    className="cursor-pointer text-green-600"
+                  >
+                    <Truck className="mr-2 h-4 w-4" />
+                    Mark as Delivered
+                  </DropdownMenuItem>
+                </>
+              </PermissionGuard>
             )}
 
             {canCancel && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => onCancel(order)}
-                  className="cursor-pointer text-orange-600"
-                >
-                  <Ban className="mr-2 h-4 w-4" />
-                  Cancel Order
-                </DropdownMenuItem>
-              </>
+              <PermissionGuard permissions={PermissionPresets.ORDERS_CANCEL}>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onCancel(order)}
+                    className="cursor-pointer text-orange-600"
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Cancel Order
+                  </DropdownMenuItem>
+                </>
+              </PermissionGuard>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

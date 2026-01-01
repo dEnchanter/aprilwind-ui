@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import StaffTable from "@/components/tables/StaffTable";
 import CustomerTable from "@/components/tables/CustomerTable";
@@ -16,9 +16,41 @@ import { Button } from "@/components/ui/button";
 import CustomDialog from "@/components/dialog/CustomDialog";
 import StaffForm from "@/components/forms/StaffForm";
 import CustomerForm from "@/components/forms/CustomerForm";
+import { usePermissionCheck } from "@/hooks/usePermissionCheck";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
+
+// Tab configuration with permissions
+const USER_TABS = [
+  {
+    value: 'staff' as const,
+    label: 'Staff',
+    permission: 'staff:read',
+  },
+  {
+    value: 'customers' as const,
+    label: 'Customers',
+    permission: 'customers:read',
+  },
+];
 
 const Page = () => {
-  const [activeTab, setActiveTab] = useState<'staff' | 'customers'>('staff');
+  const { can } = usePermissionCheck();
+
+  // Filter tabs based on permissions
+  const visibleTabs = useMemo(
+    () => USER_TABS.filter(tab => can(tab.permission)),
+    [can]
+  );
+
+  const [activeTab, setActiveTab] = useState<'staff' | 'customers'>(visibleTabs[0]?.value || 'staff');
+
+  // Update active tab if current tab becomes invisible
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.value === activeTab)) {
+      setActiveTab(visibleTabs[0]?.value);
+    }
+  }, [visibleTabs, activeTab]);
   const [staffDialogOpen, setStaffDialogOpen] = useState(false);
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
 
@@ -70,6 +102,20 @@ const Page = () => {
     ];
   }, [staffData, customersData]);
 
+  // Show access restricted message if no visible tabs
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Card className="p-8 max-w-md text-center">
+          <h2 className="text-xl font-bold mb-4">Access Restricted</h2>
+          <p className="text-gray-600">
+            You do not have permission to view any modules on this page.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 lg:px-8 space-y-6">
       {/* Header */}
@@ -85,13 +131,17 @@ const Page = () => {
             Manage staff members and customer accounts
           </p>
         </div>
-        <Button
-          onClick={() => activeTab === 'staff' ? setStaffDialogOpen(true) : setCustomerDialogOpen(true)}
-          className="bg-gradient-to-r from-brand-600 to-brand-700 text-white hover:from-brand-700 hover:to-brand-800"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {activeTab === 'staff' ? 'Add Staff' : 'Add Customer'}
-        </Button>
+        <PermissionGuard permissions={
+          activeTab === 'staff' ? PermissionPresets.STAFF_CREATE : PermissionPresets.CUSTOMERS_CREATE
+        }>
+          <Button
+            onClick={() => activeTab === 'staff' ? setStaffDialogOpen(true) : setCustomerDialogOpen(true)}
+            className="bg-gradient-to-r from-brand-600 to-brand-700 text-white hover:from-brand-700 hover:to-brand-800"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {activeTab === 'staff' ? 'Add Staff' : 'Add Customer'}
+          </Button>
+        </PermissionGuard>
       </motion.div>
 
       {/* Stats Cards */}
@@ -152,35 +202,32 @@ const Page = () => {
                 onValueChange={(value: any) => setActiveTab(value)}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm">
-                  <TabsTrigger
-                    value="staff"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <UserCog className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Staff Members</span>
-                      {!isLoading && (
-                        <span className="text-[10px] sm:text-xs opacity-80">
-                          {staffData.length} members
+                <TabsList className={`grid w-full ${
+                  visibleTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
+                } bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm`}>
+                  {visibleTabs.map((tab) => (
+                    <TabsTrigger
+                      key={tab.value}
+                      value={tab.value}
+                      className={`data-[state=active]:bg-gradient-to-br ${
+                        tab.value === 'staff'
+                          ? 'data-[state=active]:from-brand-600 data-[state=active]:to-brand-700'
+                          : 'data-[state=active]:from-green-500 data-[state=active]:to-green-600'
+                      } data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200`}
+                    >
+                      {tab.value === 'staff' ? <UserCog className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium text-xs sm:text-sm">
+                          {tab.value === 'staff' ? 'Staff Members' : 'Customers'}
                         </span>
-                      )}
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="customers"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <UserCheck className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Customers</span>
-                      {!isLoading && (
-                        <span className="text-[10px] sm:text-xs opacity-80">
-                          {customersData.length} customers
-                        </span>
-                      )}
-                    </div>
-                  </TabsTrigger>
+                        {!isLoading && (
+                          <span className="text-[10px] sm:text-xs opacity-80">
+                            {tab.value === 'staff' ? `${staffData.length} members` : `${customersData.length} customers`}
+                          </span>
+                        )}
+                      </div>
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </Tabs>
             </div>

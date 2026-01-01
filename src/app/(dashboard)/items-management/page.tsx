@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Plus, Search, Package, AlertTriangle, CheckCircle, Layers, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,44 @@ import {
 } from "@/hooks/useMaterials";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { usePermissionCheck } from "@/hooks/usePermissionCheck";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
+
+// Tab configuration with permissions
+const ITEMS_TABS = [
+  {
+    value: 'materials',
+    label: 'Materials',
+    icon: Package,
+    permission: 'raw-items:read',
+  },
+  {
+    value: 'item-types',
+    label: 'Item Types',
+    icon: Tags,
+    permission: 'item-type:read',
+  },
+] as const;
 
 export default function ItemsManagementPage() {
+  const { can } = usePermissionCheck();
+
+  // Filter tabs based on permissions
+  const visibleTabs = useMemo(
+    () => ITEMS_TABS.filter(tab => can(tab.permission)),
+    [can]
+  );
+
   const [page, setPage] = useState(1);
-  const [mainTab, setMainTab] = useState("materials");
+  const [mainTab, setMainTab] = useState(visibleTabs[0]?.value || "materials");
+
+  // Update active tab if current tab becomes invisible
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.value === mainTab)) {
+      setMainTab(visibleTabs[0]?.value);
+    }
+  }, [visibleTabs, mainTab]);
   const [filterTab, setFilterTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -127,6 +161,20 @@ export default function ItemsManagementPage() {
     },
   ];
 
+  // Show access restricted message if no visible tabs
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Card className="p-8 max-w-md text-center">
+          <h2 className="text-xl font-bold mb-4">Access Restricted</h2>
+          <p className="text-gray-600">
+            You do not have permission to view any modules on this page.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 lg:px-8 space-y-6">
       {/* Header */}
@@ -143,13 +191,15 @@ export default function ItemsManagementPage() {
           </p>
         </div>
         {mainTab === "materials" && (
-          <Button
-            onClick={() => setShowAddDialog(true)}
-            className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Material
-          </Button>
+          <PermissionGuard permissions={PermissionPresets.MATERIALS_CREATE}>
+            <Button
+              onClick={() => setShowAddDialog(true)}
+              className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Material
+            </Button>
+          </PermissionGuard>
         )}
       </motion.div>
 
@@ -159,22 +209,23 @@ export default function ItemsManagementPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-grid bg-gray-100 p-1 h-auto">
-            <TabsTrigger
-              value="materials"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2 py-2.5"
-            >
-              <Package className="h-4 w-4" />
-              <span>Materials</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="item-types"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2 py-2.5"
-            >
-              <Tags className="h-4 w-4" />
-              <span>Item Types</span>
-            </TabsTrigger>
+        <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as typeof mainTab)} className="w-full">
+          <TabsList className={`grid w-full ${
+            visibleTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1'
+          } lg:w-auto lg:inline-grid bg-gray-100 p-1 h-auto`}>
+            {visibleTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="data-[state=active]:bg-white data-[state=active]:shadow-sm gap-2 py-2.5"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{tab.label}</span>
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
         </Tabs>
 

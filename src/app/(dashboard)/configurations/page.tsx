@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import RoleTable from "@/components/tables/RoleTable";
 import ItemTypeTable from "@/components/tables/ItemTypeTable";
@@ -22,9 +22,57 @@ import RoleForm from "@/components/forms/RoleForm";
 import ItemTypeForm from "@/components/forms/ItemTypeForm";
 import CustomerTypeForm from "@/components/forms/CustomerTypeForm";
 import SizeDefForm from "@/components/forms/SizeDefForm";
+import { usePermissionCheck } from "@/hooks/usePermissionCheck";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
+
+// Tab configuration with permissions
+const CONFIG_TABS = [
+  {
+    value: 'roles' as const,
+    label: 'Roles',
+    icon: Shield,
+    permission: 'roles:read',
+  },
+  {
+    value: 'itemTypes' as const,
+    label: 'Item Types',
+    icon: Tags,
+    permission: 'item-type:read',
+  },
+  {
+    value: 'customerTypes' as const,
+    label: 'Customer Types',
+    icon: Users,
+    permission: 'customer-type:read',
+  },
+  {
+    value: 'sizeDefs' as const,
+    label: 'Size Definitions',
+    icon: Ruler,
+    permission: 'size-def:read',
+  },
+];
 
 const Page = () => {
-  const [activeTab, setActiveTab] = useState<'roles' | 'itemTypes' | 'customerTypes' | 'sizeDefs'>('roles');
+  const { can } = usePermissionCheck();
+
+  // Filter tabs based on permissions
+  const visibleTabs = useMemo(
+    () => CONFIG_TABS.filter(tab => can(tab.permission)),
+    [can]
+  );
+
+  const [activeTab, setActiveTab] = useState<'roles' | 'itemTypes' | 'customerTypes' | 'sizeDefs'>(
+    visibleTabs[0]?.value || 'roles'
+  );
+
+  // Update active tab if current tab becomes invisible
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.value === activeTab)) {
+      setActiveTab(visibleTabs[0]?.value);
+    }
+  }, [visibleTabs, activeTab]);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [itemTypeDialogOpen, setItemTypeDialogOpen] = useState(false);
   const [customerTypeDialogOpen, setCustomerTypeDialogOpen] = useState(false);
@@ -111,6 +159,20 @@ const Page = () => {
     }
   };
 
+  // Show access restricted message if no visible tabs
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Card className="p-8 max-w-md text-center">
+          <h2 className="text-xl font-bold mb-4">Access Restricted</h2>
+          <p className="text-gray-600">
+            You do not have permission to view any modules on this page.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 lg:px-8 space-y-6">
       {/* Header */}
@@ -126,13 +188,20 @@ const Page = () => {
             Manage system configurations, roles, and types
           </p>
         </div>
-        <Button
-          onClick={handleAddClick}
-          className="bg-gradient-to-r from-brand-600 to-brand-700 text-white hover:from-brand-700 hover:to-brand-800"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {getAddButtonText()}
-        </Button>
+        <PermissionGuard permissions={
+          activeTab === 'roles' ? PermissionPresets.ROLES_CREATE :
+          activeTab === 'itemTypes' ? PermissionPresets.ITEM_TYPES_CREATE :
+          activeTab === 'customerTypes' ? PermissionPresets.CUSTOMER_TYPES_CREATE :
+          PermissionPresets.SIZE_DEFS_CREATE
+        }>
+          <Button
+            onClick={handleAddClick}
+            className="bg-gradient-to-r from-brand-600 to-brand-700 text-white hover:from-brand-700 hover:to-brand-800"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {getAddButtonText()}
+          </Button>
+        </PermissionGuard>
       </motion.div>
 
       {/* Stats Cards */}
@@ -193,35 +262,30 @@ const Page = () => {
                 onValueChange={(value: any) => setActiveTab(value)}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm">
-                  <TabsTrigger
-                    value="roles"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Shield className="h-4 w-4" />
-                    <span className="font-medium text-xs sm:text-sm">Roles</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="itemTypes"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Tags className="h-4 w-4" />
-                    <span className="font-medium text-xs sm:text-sm">Item Types</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="customerTypes"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500 data-[state=active]:to-amber-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Users className="h-4 w-4" />
-                    <span className="font-medium text-xs sm:text-sm">Customer Types</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="sizeDefs"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Ruler className="h-4 w-4" />
-                    <span className="font-medium text-xs sm:text-sm">Size Definitions</span>
-                  </TabsTrigger>
+                <TabsList className={`grid w-full ${
+                  visibleTabs.length === 4 ? 'grid-cols-4' :
+                  visibleTabs.length === 3 ? 'grid-cols-3' :
+                  visibleTabs.length === 2 ? 'grid-cols-2' :
+                  'grid-cols-1'
+                } bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm`}>
+                  {visibleTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className={`${
+                          tab.value === 'roles' ? 'data-[state=active]:bg-brand-600' :
+                          tab.value === 'itemTypes' ? 'data-[state=active]:bg-green-600' :
+                          tab.value === 'customerTypes' ? 'data-[state=active]:bg-amber-600' :
+                          'data-[state=active]:bg-indigo-600'
+                        } data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="font-medium text-xs sm:text-sm">{tab.label}</span>
+                      </TabsTrigger>
+                    );
+                  })}
                 </TabsList>
               </Tabs>
             </div>

@@ -126,3 +126,32 @@ export const clearUserPermissions = (): void => {
     localStorage.removeItem('userPermissions');
   }
 };
+
+export const saveMustChangePassword = (mustChange: boolean): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('mustChangePassword', JSON.stringify(mustChange));
+  }
+};
+
+export const getMustChangePassword = (): boolean => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const mustChangeString = localStorage.getItem('mustChangePassword');
+  if (mustChangeString) {
+    try {
+      return JSON.parse(mustChangeString) as boolean;
+    } catch (error) {
+      console.error("Error parsing mustChangePassword from local storage:", error);
+      return false;
+    }
+  }
+  return false;
+};
+
+export const clearMustChangePassword = (): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('mustChangePassword');
+  }
+};

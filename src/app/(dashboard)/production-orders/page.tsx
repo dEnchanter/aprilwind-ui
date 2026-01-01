@@ -24,6 +24,8 @@ import { CancelOrderDialog } from "@/components/production-orders/CancelOrderDia
 import { ProductionOrderDetailsSidebar } from "@/components/production-orders/ProductionOrderDetailsSidebar";
 import CustomDialog from "@/components/dialog/CustomDialog";
 import ProductionOrderForm from "@/components/forms/ProductionOrderForm";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 export default function ProductionOrdersPage() {
   const [page, setPage] = useState(1);
@@ -180,16 +182,18 @@ export default function ProductionOrdersPage() {
             Manage custom production orders from customers
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditOrder(undefined);
-            setShowCreateDialog(true);
-          }}
-          className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Order
-        </Button>
+        <PermissionGuard permissions={PermissionPresets.ORDERS_CREATE}>
+          <Button
+            onClick={() => {
+              setEditOrder(undefined);
+              setShowCreateDialog(true);
+            }}
+            className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Order
+          </Button>
+        </PermissionGuard>
       </motion.div>
 
       {/* Stats Cards */}

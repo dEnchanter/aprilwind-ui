@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
-import { navigationItems, filterNavigationByRole } from "@/config/navigation";
-import { getUserRoleDetail } from "@/utils/storage";
+import { navigationItems, filterNavigationByPermissions } from "@/config/navigation";
+import { getUserRoleDetail, getUserPermissions } from "@/utils/storage";
 
 interface MobileSidebarProps {
   open: boolean;
@@ -18,9 +18,10 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   const pathname = usePathname();
   const role = getUserRoleDetail();
 
-  // Filter navigation items based on user role
+  // Filter navigation items based on user permissions
   const visibleNavigation = useMemo(() => {
-    return filterNavigationByRole(navigationItems, role?.name);
+    const permissions = getUserPermissions();
+    return filterNavigationByPermissions(navigationItems, permissions, role?.name);
   }, [role?.name]);
 
   return (

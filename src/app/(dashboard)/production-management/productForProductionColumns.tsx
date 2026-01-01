@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PermissionGuard } from '@/components/utils/PermissionGuard';
+import { PermissionPresets } from '@/utils/permissions';
 
 export const createProductForProductionColumns = (
   onEdit: (production: any) => void,
@@ -166,26 +168,30 @@ export const createProductForProductionColumns = (
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(production);
-              }}
-              className="cursor-pointer"
-            >
-              <Edit2 className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(production);
-              }}
-              className="cursor-pointer text-red-600 focus:text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            <PermissionGuard permissions={PermissionPresets.PRODUCT_FOR_PRODUCTION_EDIT}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(production);
+                }}
+                className="cursor-pointer"
+              >
+                <Edit2 className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+            </PermissionGuard>
+            <PermissionGuard permissions={PermissionPresets.PRODUCT_FOR_PRODUCTION_DELETE}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(production);
+                }}
+                className="cursor-pointer text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </PermissionGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       );

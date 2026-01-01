@@ -58,6 +58,8 @@ import { Separator } from '../ui/separator';
 import CustomDialog from '../dialog/CustomDialog';
 import StaffForm from '../forms/StaffForm';
 import { Badge } from '../ui/badge';
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 interface StaffTableProps {
   hideAddButton?: boolean;
@@ -270,42 +272,50 @@ const StaffTable = ({ hideAddButton = false }: StaffTableProps) => {
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleEdit(member)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
+                          <PermissionGuard permissions={PermissionPresets.STAFF_EDIT}>
+                            <DropdownMenuItem
+                              onClick={() => handleEdit(member)}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                          </PermissionGuard>
                           <DropdownMenuSeparator />
                           {!member.login && member.role?.isLogin && (
-                            <>
-                              <DropdownMenuItem
-                                onClick={() => handleRegisterLogin(member)}
-                                className="cursor-pointer text-blue-600 focus:text-blue-600"
-                              >
-                                <UserPlus className="mr-2 h-4 w-4" />
-                                Register Login
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                            </>
+                            <PermissionGuard permissions={PermissionPresets.STAFF_CREATE}>
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => handleRegisterLogin(member)}
+                                  className="cursor-pointer text-blue-600 focus:text-blue-600"
+                                >
+                                  <UserPlus className="mr-2 h-4 w-4" />
+                                  Register Login
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            </PermissionGuard>
                           )}
                           {member.login?.isActive !== false ? (
-                            <DropdownMenuItem
-                              onClick={() => handleDeactivate(member)}
-                              className="cursor-pointer text-orange-600 focus:text-orange-600"
-                            >
-                              <UserX className="mr-2 h-4 w-4" />
-                              Deactivate Account
-                            </DropdownMenuItem>
+                            <PermissionGuard permissions={PermissionPresets.STAFF_EDIT}>
+                              <DropdownMenuItem
+                                onClick={() => handleDeactivate(member)}
+                                className="cursor-pointer text-orange-600 focus:text-orange-600"
+                              >
+                                <UserX className="mr-2 h-4 w-4" />
+                                Deactivate Account
+                              </DropdownMenuItem>
+                            </PermissionGuard>
                           ) : (
-                            <DropdownMenuItem
-                              onClick={() => handleActivate(member)}
-                              className="cursor-pointer text-green-600 focus:text-green-600"
-                            >
-                              <UserCheck className="mr-2 h-4 w-4" />
-                              Activate Account
-                            </DropdownMenuItem>
+                            <PermissionGuard permissions={PermissionPresets.STAFF_EDIT}>
+                              <DropdownMenuItem
+                                onClick={() => handleActivate(member)}
+                                className="cursor-pointer text-green-600 focus:text-green-600"
+                              >
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Activate Account
+                              </DropdownMenuItem>
+                            </PermissionGuard>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

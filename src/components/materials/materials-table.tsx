@@ -35,6 +35,8 @@ import {
 import { AddStockDialog } from "./add-stock-dialog";
 import { AdjustStockDialog } from "./adjust-stock-dialog";
 import { EditMaterialDialog } from "./edit-material-dialog";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 interface MaterialsTableProps {
   data: any[];
@@ -229,29 +231,39 @@ export function MaterialsTable({
                             <Eye className="mr-2 h-4 w-4 text-gray-500" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setAddStockMaterial(material)}
-                            className="cursor-pointer"
-                          >
-                            <Plus className="mr-2 h-4 w-4 text-green-600" />
-                            Add Stock
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => setAdjustStockMaterial(material)}
-                            className="cursor-pointer"
-                          >
-                            <TrendingUp className="mr-2 h-4 w-4 text-blue-600" />
-                            Adjust Stock
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setEditMaterial(material)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="mr-2 h-4 w-4 text-gray-500" />
-                            Edit
-                          </DropdownMenuItem>
+                          <PermissionGuard permissions={PermissionPresets.MATERIALS_ADD_STOCK}>
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setAddStockMaterial(material)}
+                                className="cursor-pointer"
+                              >
+                                <Plus className="mr-2 h-4 w-4 text-green-600" />
+                                Add Stock
+                              </DropdownMenuItem>
+                            </>
+                          </PermissionGuard>
+                          <PermissionGuard permissions={PermissionPresets.MATERIALS_ADJUST_STOCK}>
+                            <DropdownMenuItem
+                              onClick={() => setAdjustStockMaterial(material)}
+                              className="cursor-pointer"
+                            >
+                              <TrendingUp className="mr-2 h-4 w-4 text-blue-600" />
+                              Adjust Stock
+                            </DropdownMenuItem>
+                          </PermissionGuard>
+                          <PermissionGuard permissions={PermissionPresets.MATERIALS_EDIT}>
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => setEditMaterial(material)}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="mr-2 h-4 w-4 text-gray-500" />
+                                Edit
+                              </DropdownMenuItem>
+                            </>
+                          </PermissionGuard>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

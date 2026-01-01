@@ -11,6 +11,8 @@ export const Endpoint = {
   REGISTER: "auth/register",
   CHANGE_PASSWORD: "auth/change-password",
   RESET_PASSWORD: (staffId: number) => `auth/${staffId}/reset-password`,
+  FORGOT_PASSWORD: "auth/forgot-password",
+  RESET_PASSWORD_WITH_TOKEN: "auth/reset-password",
   GET_PROFILE: "auth/profile",
   GET_ME: "auth/me",
   LOGOUT: "auth/logout",

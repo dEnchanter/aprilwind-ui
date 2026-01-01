@@ -38,6 +38,8 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 interface ProductStockTableProps {
   data: any[];
@@ -239,16 +241,18 @@ export function ProductStockTable({
 
                           {/* Show Create Sale only for available items */}
                           {isAvailable && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => onMarkAsSold(stock)}
-                                className="cursor-pointer text-green-700"
-                              >
-                                <DollarSign className="mr-2 h-4 w-4" />
-                                Create Sale
-                              </DropdownMenuItem>
-                            </>
+                            <PermissionGuard permissions={PermissionPresets.PRODUCT_STOCK_CREATE_SALE}>
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => onMarkAsSold(stock)}
+                                  className="cursor-pointer text-green-700"
+                                >
+                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  Create Sale
+                                </DropdownMenuItem>
+                              </>
+                            </PermissionGuard>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Edit, PackageX, Eye } from "lucide-react";
 import { useProductDef } from "@/hooks/useProductDef";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 interface ProductDefinitionsTableProps {
   searchTerm: string;
@@ -162,13 +164,15 @@ export function ProductDefinitionsTable({
                             View Details
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          onClick={() => onEdit(productDef)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="mr-2 h-4 w-4 text-gray-500" />
-                          Edit
-                        </DropdownMenuItem>
+                        <PermissionGuard permissions={PermissionPresets.PRODUCT_DEFS_EDIT}>
+                          <DropdownMenuItem
+                            onClick={() => onEdit(productDef)}
+                            className="cursor-pointer"
+                          >
+                            <Edit className="mr-2 h-4 w-4 text-gray-500" />
+                            Edit
+                          </DropdownMenuItem>
+                        </PermissionGuard>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

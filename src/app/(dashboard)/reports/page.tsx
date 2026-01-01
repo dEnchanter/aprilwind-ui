@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
 import { DateFilterBar } from '@/components/reports/DateFilterBar';
+import { usePermissionCheck } from '@/hooks/usePermissionCheck';
 import { ProductionReport } from '@/components/reports/ProductionReport';
 import { SalesReport } from '@/components/reports/SalesReport';
 import { InventoryReport } from '@/components/reports/InventoryReport';
@@ -33,8 +35,67 @@ type ReportTab =
   | 'staff'
   | 'business';
 
+// Tab configuration with permissions
+const REPORT_TABS = [
+  {
+    value: 'production' as const,
+    label: 'Production',
+    permission: 'reports:production',
+  },
+  {
+    value: 'sales' as const,
+    label: 'Sales',
+    permission: 'reports:sales',
+  },
+  {
+    value: 'inventory' as const,
+    label: 'Inventory',
+    permission: 'reports:inventory',
+  },
+  {
+    value: 'materials' as const,
+    label: 'Materials',
+    permission: 'reports:materials',
+  },
+  {
+    value: 'customers' as const,
+    label: 'Customers',
+    permission: 'reports:customers',
+  },
+  {
+    value: 'production-orders' as const,
+    label: 'Orders',
+    permission: 'reports:production-orders',
+  },
+  {
+    value: 'staff' as const,
+    label: 'Staff',
+    permission: 'reports:staff-performance',
+  },
+  {
+    value: 'business' as const,
+    label: 'Business',
+    permission: 'reports:business',
+  },
+] as const;
+
 const ReportsPage = () => {
-  const [activeTab, setActiveTab] = useState<ReportTab>('production');
+  const { can } = usePermissionCheck();
+
+  // Filter tabs based on permissions
+  const visibleTabs = useMemo(
+    () => REPORT_TABS.filter(tab => can(tab.permission)),
+    [can]
+  );
+
+  const [activeTab, setActiveTab] = useState<ReportTab>(visibleTabs[0]?.value || 'production');
+
+  // Update active tab if current tab becomes invisible
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.value === activeTab)) {
+      setActiveTab(visibleTabs[0]?.value);
+    }
+  }, [visibleTabs, activeTab]);
   const [activePreset, setActivePreset] = useState<DatePreset>('this-month');
 
   const dateRange = useMemo(() => getDateRangeForPreset(activePreset), [activePreset]);
@@ -52,6 +113,20 @@ const ReportsPage = () => {
   const handleDateRangeChange = (startDate: string, endDate: string, preset: string) => {
     setActivePreset(preset as DatePreset);
   };
+
+  // Show access restricted message if no visible tabs
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Card className="p-8 max-w-md text-center">
+          <h2 className="text-xl font-bold mb-4">Access Restricted</h2>
+          <p className="text-gray-600">
+            You do not have permission to view any reports on this page.
+          </p>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -71,31 +146,21 @@ const ReportsPage = () => {
 
       {/* Reports Tabs */}
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ReportTab)}>
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-2 h-auto">
-          <TabsTrigger value="production" className="text-xs sm:text-sm">
-            Production
-          </TabsTrigger>
-          <TabsTrigger value="sales" className="text-xs sm:text-sm">
-            Sales
-          </TabsTrigger>
-          <TabsTrigger value="inventory" className="text-xs sm:text-sm">
-            Inventory
-          </TabsTrigger>
-          <TabsTrigger value="materials" className="text-xs sm:text-sm">
-            Materials
-          </TabsTrigger>
-          <TabsTrigger value="customers" className="text-xs sm:text-sm">
-            Customers
-          </TabsTrigger>
-          <TabsTrigger value="production-orders" className="text-xs sm:text-sm">
-            Orders
-          </TabsTrigger>
-          <TabsTrigger value="staff" className="text-xs sm:text-sm">
-            Staff
-          </TabsTrigger>
-          <TabsTrigger value="business" className="text-xs sm:text-sm">
-            Business
-          </TabsTrigger>
+        <TabsList className={`grid w-full ${
+          visibleTabs.length >= 8 ? 'grid-cols-4 lg:grid-cols-8' :
+          visibleTabs.length === 7 ? 'grid-cols-4 lg:grid-cols-7' :
+          visibleTabs.length === 6 ? 'grid-cols-3 lg:grid-cols-6' :
+          visibleTabs.length === 5 ? 'grid-cols-3 lg:grid-cols-5' :
+          visibleTabs.length === 4 ? 'grid-cols-2 lg:grid-cols-4' :
+          visibleTabs.length === 3 ? 'grid-cols-2 lg:grid-cols-3' :
+          visibleTabs.length === 2 ? 'grid-cols-2' :
+          'grid-cols-1'
+        } gap-2 h-auto`}>
+          {visibleTabs.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value} className="text-xs sm:text-sm">
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="production" className="mt-6">

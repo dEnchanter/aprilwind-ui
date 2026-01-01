@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreHorizontal, Edit, PackageX, Eye, CheckCircle2, Clock, XCircle, Ban, RotateCcw } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { useProductions, useCancelProduction, useReactivateProduction } from "@/hooks/useProductions";
+import { useProductsForProduction, useCancelProductForProduction, useReactivateProductForProduction } from "@/hooks/useProductsForProduction";
 import { getAccessToken } from "@/utils/storage";
 import {
   Dialog,
@@ -107,9 +107,9 @@ export function ProductForProductionsTable({
   const [selectedProduction, setSelectedProduction] = useState<any>(null);
   const [cancelReason, setCancelReason] = useState("");
 
-  const { data: productionsResponse, isLoading } = useProductions({ page: 1, limit: 100 });
-  const cancelMutation = useCancelProduction();
-  const reactivateMutation = useReactivateProduction();
+  const { data: productionsResponse, isLoading } = useProductsForProduction({ page: 1, limit: 100 });
+  const cancelMutation = useCancelProductForProduction();
+  const reactivateMutation = useReactivateProductForProduction();
 
   const allProductions = productionsResponse || [];
 
@@ -335,7 +335,33 @@ export function ProductForProductionsTable({
                           <DropdownMenuSeparator />
                           {onView && (
                             <DropdownMenuItem
-                              onClick={() => onView(production)}
+                              onClick={() => {
+                                // Enrich production object with material status
+                                const materialData = materialStatusMap.get(production.id);
+
+                                // Determine approval status based on material summary
+                                let approvalStatus = 'pending';
+                                if (materialData?.summary) {
+                                  if (materialData.summary.approved > 0) {
+                                    approvalStatus = 'approved';
+                                  } else if (materialData.summary.rejected > 0) {
+                                    approvalStatus = 'rejected';
+                                  } else if (materialData.summary.pending > 0) {
+                                    approvalStatus = 'pending';
+                                  }
+                                }
+
+                                // Create enriched production object with material status
+                                const enrichedProduction = {
+                                  ...production,
+                                  materialRequest: {
+                                    approvalStatus,
+                                    summary: materialData?.summary || null,
+                                  },
+                                };
+
+                                onView(enrichedProduction);
+                              }}
                               className="cursor-pointer"
                             >
                               <Eye className="mr-2 h-4 w-4 text-gray-500" />

@@ -14,6 +14,8 @@ import {
 import { MaterialRequestsTable } from "@/components/tables/MaterialRequestsTable";
 import CustomDialog from "@/components/dialog/CustomDialog";
 import MaterialRequestForm from "@/components/forms/MaterialRequestForm";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 export default function MaterialRequestPage() {
   const [page, setPage] = useState(1);
@@ -83,16 +85,18 @@ export default function MaterialRequestPage() {
             Manage material requests for production and track approval status
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setEditMaterialRequest(undefined);
-            setShowAddDialog(true);
-          }}
-          className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Request
-        </Button>
+        <PermissionGuard permissions={PermissionPresets.MATERIAL_REQUESTS_CREATE}>
+          <Button
+            onClick={() => {
+              setEditMaterialRequest(undefined);
+              setShowAddDialog(true);
+            }}
+            className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Request
+          </Button>
+        </PermissionGuard>
       </motion.div>
 
       {/* Filters and Search */}

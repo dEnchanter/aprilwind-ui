@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { z } from "zod";
 import { ProductionFormData, productionSchema } from "@/schemas/productionSchema";
-import { useCreateProduction, useUpdateProduction } from "@/hooks/useProductions";
+import { useCreateProductForProduction, useUpdateProductForProduction } from "@/hooks/useProductsForProduction";
 import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useProductDef } from "@/hooks/useProductDef";
@@ -26,8 +26,8 @@ interface ProductForProductionFormProps extends React.ComponentProps<"form"> {
 
 const ProductForProductionForm = ({ className, closeDialog, initialValues }: ProductForProductionFormProps) => {
   const [isMounted, setIsMounted] = useState(false);
-  const createProduction = useCreateProduction();
-  const updateProduction = useUpdateProduction();
+  const createProduction = useCreateProductForProduction();
+  const updateProduction = useUpdateProductForProduction();
   const currentUser = useCurrentUser();
   const { data: productDefs, isLoading: productDefsLoading } = useProductDef({ page: 1, limit: 100 });
 

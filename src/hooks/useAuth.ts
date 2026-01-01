@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Endpoint } from '@/services/api';
 import { fetchPost, fetchGet, fetchPatch } from '@/services/fetcher';
-import { saveAccessToken, saveRefreshToken, saveUserData, saveUserRoleDetail, saveUserPermissions, clearAccessToken, clearRefreshToken, clearUserData, clearUserRoleDetail, clearUserPermissions, getAccessToken } from '@/utils/storage';
+import { saveAccessToken, saveRefreshToken, saveUserData, saveUserRoleDetail, saveUserPermissions, saveMustChangePassword, clearAccessToken, clearRefreshToken, clearUserData, clearUserRoleDetail, clearUserPermissions, clearMustChangePassword, getAccessToken } from '@/utils/storage';
 import { toast } from 'sonner';
 
 // Types for authentication
@@ -15,6 +15,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   accessToken: string;
   refreshToken?: string;
+  mustChangePassword?: boolean;
   user: {
     id: number;
     profileCode: string;
@@ -41,6 +42,15 @@ export interface ChangePasswordRequest {
 }
 
 export interface ResetPasswordRequest {
+  newPassword: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordWithTokenRequest {
+  token: string;
   newPassword: string;
 }
 
@@ -81,6 +91,9 @@ export const useLogin = () => {
 
       // Store user permissions
       saveUserPermissions(data.user.permissions || []);
+
+      // Store mustChangePassword flag
+      saveMustChangePassword(data.mustChangePassword || false);
 
       toast.success('Login successful');
     },
@@ -182,6 +195,8 @@ export const useChangePassword = () => {
       return response;
     },
     onSuccess: () => {
+      // Clear the mustChangePassword flag after successful password change
+      clearMustChangePassword();
       toast.success('Password changed successfully');
     },
     onError: (error: any) => {
@@ -263,6 +278,48 @@ export const useDeactivateAccount = () => {
   });
 };
 
+// Forgot password mutation (sends reset link to email)
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: async (data: ForgotPasswordRequest) => {
+      const response = await fetchPost<{ message: string }, ForgotPasswordRequest>(
+        Endpoint.FORGOT_PASSWORD,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {
+      toast.success('If an account with that email exists, a password reset link has been sent');
+    },
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to send reset email';
+      toast.error(message);
+    },
+  });
+};
+
+// Reset password with token mutation (from email link)
+export const useResetPasswordWithToken = () => {
+  return useMutation({
+    mutationFn: async (data: ResetPasswordWithTokenRequest) => {
+      const response = await fetchPost<{ message: string }, ResetPasswordWithTokenRequest>(
+        Endpoint.RESET_PASSWORD_WITH_TOKEN,
+        data
+      );
+      return response;
+    },
+    onSuccess: () => {
+      // Clear the mustChangePassword flag after successful password reset
+      clearMustChangePassword();
+      toast.success('Password has been reset successfully. You can now login with your new password.');
+    },
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to reset password';
+      toast.error(message);
+    },
+  });
+};
+
 // Logout mutation
 export const useLogout = () => {
   const queryClient = useQueryClient();
@@ -283,6 +340,7 @@ export const useLogout = () => {
       clearUserData();
       clearUserRoleDetail();
       clearUserPermissions();
+      clearMustChangePassword();
 
       // Clear all queries
       queryClient.clear();

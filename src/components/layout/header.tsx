@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, Menu, Search, ChevronRight, LogOut, User, Settings, ShieldCheck } from "lucide-react";
+import { Bell, Menu, Search, ChevronRight, LogOut, Settings, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -215,10 +215,6 @@ export function Header({ onMenuClick }: HeaderProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push("/profile")}>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/change-password")}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Change Password</span>

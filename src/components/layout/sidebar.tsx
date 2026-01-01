@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { ChevronLeft } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
-import { navigationItems, filterNavigationByRole } from "@/config/navigation";
-import { getUserRoleDetail } from "@/utils/storage";
+import { navigationItems, filterNavigationByPermissions } from "@/config/navigation";
+import { getUserRoleDetail, getUserPermissions } from "@/utils/storage";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -19,9 +19,10 @@ export function Sidebar() {
     setRole(getUserRoleDetail());
   }, []);
 
-  // Filter navigation items based on user role
+  // Filter navigation items based on user permissions
   const visibleNavigation = useMemo(() => {
-    return filterNavigationByRole(navigationItems, role?.name);
+    const permissions = getUserPermissions();
+    return filterNavigationByPermissions(navigationItems, permissions, role?.name);
   }, [role?.name]);
 
   return (

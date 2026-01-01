@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Package, Hammer, Activity, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,50 @@ import ProductionForm from "@/components/forms/ProductionForm";
 import ProductDefDetailsSidebar from "@/components/sidebars/ProductDefDetailsSidebar";
 import ProductForProductionDetailsSidebar from "@/components/sidebars/ProductForProductionDetailsSidebar";
 import ProductionTrackingDetailsSidebar from "@/components/sidebars/ProductionTrackingDetailsSidebar";
+import { usePermissionCheck } from "@/hooks/usePermissionCheck";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
+
+// Tab configuration with permissions
+const PRODUCTION_TABS = [
+  {
+    value: 'product-definitions',
+    label: 'Definitions',
+    icon: Package,
+    permission: 'product-def:read',
+  },
+  {
+    value: 'productions',
+    label: 'Requests',
+    icon: Hammer,
+    permission: 'product-for-production:read',
+  },
+  {
+    value: 'tracking',
+    label: 'Tracking',
+    icon: Activity,
+    permission: 'production:read',
+  },
+] as const;
 
 export default function ProductionManagementPage() {
-  const [activeTab, setActiveTab] = useState("product-definitions");
+  const { can } = usePermissionCheck();
+
+  // Filter tabs based on permissions
+  const visibleTabs = useMemo(
+    () => PRODUCTION_TABS.filter(tab => can(tab.permission)),
+    [can]
+  );
+
+  // Set initial active tab to first visible tab
+  const [activeTab, setActiveTab] = useState(visibleTabs[0]?.value || 'product-definitions');
+
+  // Update active tab if current tab becomes invisible
+  useEffect(() => {
+    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.value === activeTab)) {
+      setActiveTab(visibleTabs[0]?.value);
+    }
+  }, [visibleTabs, activeTab]);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Product Definitions
@@ -83,6 +124,20 @@ export default function ProductionManagementPage() {
 
   const activeConfig = getActiveTabConfig();
 
+  // Show access restricted message if no visible tabs
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Card className="p-8 max-w-md text-center">
+          <h2 className="text-xl font-bold mb-4">Access Restricted</h2>
+          <p className="text-gray-600">
+            You do not have permission to view any modules on this page.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 lg:px-8 space-y-6">
       {/* Header */}
@@ -98,13 +153,19 @@ export default function ProductionManagementPage() {
             {activeConfig.description}
           </p>
         </div>
-        <Button
-          onClick={activeConfig.onButtonClick}
-          className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {activeConfig.buttonText}
-        </Button>
+        <PermissionGuard permissions={
+          activeTab === 'product-definitions' ? PermissionPresets.PRODUCT_DEFS_CREATE :
+          activeTab === 'productions' ? PermissionPresets.PRODUCT_FOR_PRODUCTION_CREATE :
+          PermissionPresets.PRODUCTION_CREATE
+        }>
+          <Button
+            onClick={activeConfig.onButtonClick}
+            className="bg-brand-700 hover:bg-brand-800 shadow-lg shadow-brand-700/30 transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {activeConfig.buttonText}
+          </Button>
+        </PermissionGuard>
       </motion.div>
 
       {/* Tabs and Search */}
@@ -117,35 +178,27 @@ export default function ProductionManagementPage() {
           <CardContent className="p-6">
             <div className="flex flex-col space-y-4">
               {/* Tabs */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm">
-                  <TabsTrigger
-                    value="product-definitions"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Package className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Definitions</span>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="productions"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Hammer className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Requests</span>
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="tracking"
-                    className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
-                  >
-                    <Activity className="h-4 w-4" />
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-xs sm:text-sm">Tracking</span>
-                    </div>
-                  </TabsTrigger>
+              <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="w-full">
+                <TabsList className={`grid w-full ${
+                  visibleTabs.length === 3 ? 'grid-cols-3' :
+                  visibleTabs.length === 2 ? 'grid-cols-2' :
+                  'grid-cols-1'
+                } bg-white border border-gray-200 p-1.5 h-auto rounded-lg shadow-sm`}>
+                  {visibleTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <TabsTrigger
+                        key={tab.value}
+                        value={tab.value}
+                        className="data-[state=active]:bg-gradient-to-br data-[state=active]:from-brand-600 data-[state=active]:to-brand-700 data-[state=active]:text-white data-[state=active]:shadow-md gap-2 py-3 px-4 rounded-md transition-all duration-200"
+                      >
+                        <Icon className="h-4 w-4" />
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium text-xs sm:text-sm">{tab.label}</span>
+                        </div>
+                      </TabsTrigger>
+                    );
+                  })}
                 </TabsList>
               </Tabs>
 

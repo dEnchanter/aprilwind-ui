@@ -84,8 +84,13 @@ export default function LoginPage() {
     loginMutation.mutate(
       { profileCode: data.profileCode, password: data.password },
       {
-        onSuccess: () => {
-          router.push('/dashboard-overview');
+        onSuccess: (response) => {
+          // Check if user must change password (first login)
+          if (response.mustChangePassword) {
+            router.push('/change-password?firstLogin=true');
+          } else {
+            router.push('/dashboard-overview');
+          }
         },
       }
     );

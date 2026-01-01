@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatDate, cn } from "@/lib/utils";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 
 // Helper function to get stage badge styling
 const getStageBadge = (stage: string, movedToStock?: boolean) => {
@@ -162,84 +164,102 @@ export const createProductionTrackingColumns = (
               <>
                 {/* Show Move to Stock option if stage is completed and not already moved */}
                 {production.stage?.toLowerCase() === 'completed' && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => onMoveToStock(production)}
-                      className="text-green-700"
-                    >
-                      <Box className="mr-2 h-4 w-4" />
-                      Move to Stock
-                    </DropdownMenuItem>
-                  </>
+                  <PermissionGuard permissions={PermissionPresets.PRODUCTION_MOVE_TO_STOCK}>
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => onMoveToStock(production)}
+                        className="text-green-700"
+                      >
+                        <Box className="mr-2 h-4 w-4" />
+                        Move to Stock
+                      </DropdownMenuItem>
+                    </>
+                  </PermissionGuard>
                 )}
 
                 {!isCompleted && (
                   <>
                     {/* Show Assign Tailor option if no tailor assigned and stage is bidding */}
                     {!production.tailor && production.stage?.toLowerCase() === 'bidding' && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onAssignTailor(production)}>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Assign Tailor
-                        </DropdownMenuItem>
-                      </>
+                      <PermissionGuard permissions={PermissionPresets.PRODUCTION_ASSIGN_TAILOR}>
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onAssignTailor(production)}>
+                            <UserPlus className="mr-2 h-4 w-4" />
+                            Assign Tailor
+                          </DropdownMenuItem>
+                        </>
+                      </PermissionGuard>
                     )}
                     {/* Show Submit for QA option if stage is in production */}
                     {production.stage?.toLowerCase() === 'in production' && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onSubmitForQA(production)}
-                          className="text-blue-700"
-                        >
-                          <CheckCircle2 className="mr-2 h-4 w-4" />
-                          Submit for QA
-                        </DropdownMenuItem>
-                      </>
+                      <PermissionGuard permissions={PermissionPresets.PRODUCTION_SUBMIT_QA}>
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => onSubmitForQA(production)}
+                            className="text-blue-700"
+                          >
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Submit for QA
+                          </DropdownMenuItem>
+                        </>
+                      </PermissionGuard>
                     )}
                     {/* Show QA Review option if stage is await qa */}
                     {production.stage?.toLowerCase() === 'await qa' && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onQAReview(production)}>
-                          <FileCheck className="mr-2 h-4 w-4" />
-                          QA Review
-                        </DropdownMenuItem>
-                      </>
+                      <PermissionGuard permissions={PermissionPresets.PRODUCTION_QA_REVIEW}>
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onQAReview(production)}>
+                            <FileCheck className="mr-2 h-4 w-4" />
+                            QA Review
+                          </DropdownMenuItem>
+                        </>
+                      </PermissionGuard>
                     )}
                     {/* Show Rework option if stage is rejected and has tailor */}
                     {production.stage?.toLowerCase() === 'rejected' && production.tailor && (
+                      <PermissionGuard permissions={PermissionPresets.PRODUCTION_REWORK}>
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => onRework(production)}
+                            className="text-amber-700"
+                          >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Send for Rework
+                          </DropdownMenuItem>
+                        </>
+                      </PermissionGuard>
+                    )}
+                    <PermissionGuard permissions={PermissionPresets.PRODUCTION_EDIT}>
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => onRework(production)}
-                          className="text-amber-700"
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Send for Rework
+                        <DropdownMenuItem onClick={() => onEdit(production)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
                         </DropdownMenuItem>
                       </>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onEdit(production)}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
+                    </PermissionGuard>
                   </>
                 )}
               </>
             )}
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(production)}
-              className="text-red-600"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            <PermissionGuard permissions={PermissionPresets.PRODUCTION_DELETE}>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(production)}
+                  className="text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            </PermissionGuard>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -39,6 +39,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { PermissionGuard } from "@/components/utils/PermissionGuard";
+import { PermissionPresets } from "@/utils/permissions";
 import { Separator } from "@/components/ui/separator";
 import { Package, Calendar } from "lucide-react";
 import {
@@ -323,39 +325,51 @@ export function MaterialRequestsTable({
                           {/* Show Approve/Reject/Cancel only for pending requests */}
                           {status === 'pending' && (
                             <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleApproveClick(request)}
-                                className="cursor-pointer text-green-600 focus:text-green-600"
-                              >
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Approve
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleRejectClick(request)}
-                                className="cursor-pointer text-red-600 focus:text-red-600"
-                              >
-                                <XCircle className="mr-2 h-4 w-4" />
-                                Reject
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleCancelClick(request)}
-                                className="cursor-pointer text-orange-600 focus:text-orange-600"
-                              >
-                                <Ban className="mr-2 h-4 w-4" />
-                                Cancel Request
-                              </DropdownMenuItem>
+                              <PermissionGuard permissions={PermissionPresets.MATERIAL_REQUESTS_APPROVE}>
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() => handleApproveClick(request)}
+                                    className="cursor-pointer text-green-600 focus:text-green-600"
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                </>
+                              </PermissionGuard>
+                              <PermissionGuard permissions={PermissionPresets.MATERIAL_REQUESTS_REJECT}>
+                                <DropdownMenuItem
+                                  onClick={() => handleRejectClick(request)}
+                                  className="cursor-pointer text-red-600 focus:text-red-600"
+                                >
+                                  <XCircle className="mr-2 h-4 w-4" />
+                                  Reject
+                                </DropdownMenuItem>
+                              </PermissionGuard>
+                              <PermissionGuard permissions={PermissionPresets.MATERIAL_REQUESTS_CANCEL}>
+                                <DropdownMenuItem
+                                  onClick={() => handleCancelClick(request)}
+                                  className="cursor-pointer text-orange-600 focus:text-orange-600"
+                                >
+                                  <Ban className="mr-2 h-4 w-4" />
+                                  Cancel Request
+                                </DropdownMenuItem>
+                              </PermissionGuard>
                             </>
                           )}
 
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => onEdit(request)}
-                            className="cursor-pointer"
-                          >
-                            <Edit className="mr-2 h-4 w-4 text-gray-500" />
-                            Edit
-                          </DropdownMenuItem>
+                          <PermissionGuard permissions={PermissionPresets.MATERIAL_REQUESTS_EDIT}>
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => onEdit(request)}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="mr-2 h-4 w-4 text-gray-500" />
+                                Edit
+                              </DropdownMenuItem>
+                            </>
+                          </PermissionGuard>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
