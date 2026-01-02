@@ -39,7 +39,7 @@ export interface NavigationItem {
 export const navigationItems: NavigationItem[] = [
   {
     label: 'Dashboard',
-    path: '/',
+    path: '/dashboard-overview',
     icon: LayoutDashboard,
     permissions: {
       anyOf: ['dashboard:view'],

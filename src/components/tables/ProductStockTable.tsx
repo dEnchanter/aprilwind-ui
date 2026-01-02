@@ -241,7 +241,7 @@ export function ProductStockTable({
 
                           {/* Show Create Sale only for available items */}
                           {isAvailable && (
-                            <PermissionGuard permissions={PermissionPresets.PRODUCT_STOCK_CREATE_SALE}>
+                            <PermissionGuard permissions={PermissionPresets.INVOICES_CREATE}>
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem

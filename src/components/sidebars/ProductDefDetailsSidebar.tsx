@@ -2,7 +2,7 @@
 "use client"
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Package, DollarSign, User, Layers } from "lucide-react";
+import { Package, User, Layers } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 interface ProductDefDetailsSidebarProps {
@@ -15,10 +15,9 @@ const ProductDefDetailsSidebar = ({ open, onClose, productDef }: ProductDefDetai
   if (!productDef) return null;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -50,9 +49,8 @@ const ProductDefDetailsSidebar = ({ open, onClose, productDef }: ProductDefDetai
 
               <div>
                 <label className="text-xs text-gray-500">Production Cost</label>
-                <p className="text-sm font-medium flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
-                  {formatCurrency(productDef.cost)}
+                <p className="text-sm font-medium">
+                  ₦{formatCurrency(productDef.cost)}
                 </p>
               </div>
             </div>

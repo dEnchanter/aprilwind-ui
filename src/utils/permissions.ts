@@ -120,9 +120,11 @@ export const PermissionPresets = {
 
   // Product Stock (Inventory) - Backend uses 'stock'
   PRODUCT_STOCK_VIEW: 'stock:read',
+  PRODUCT_STOCK_CREATE: 'stock:create',
   PRODUCT_STOCK_EDIT: 'stock:update',
   PRODUCT_STOCK_DELETE: 'stock:delete',
-  PRODUCT_STOCK_CREATE_SALE: 'stock:create-sale',
+  PRODUCT_STOCK_SEARCH: 'stock:search',
+  PRODUCT_STOCK_CHECK_AVAILABILITY: 'stock:check-availability',
 
   // Invoices - Backend uses 'invoice' (singular)
   INVOICES_VIEW: 'invoice:read',

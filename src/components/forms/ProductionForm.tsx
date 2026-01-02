@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormMessage } from "../ui/form";
 import { Textarea } from "../ui/textarea";
 import { z } from "zod";
 import { useStaff } from "@/hooks/useStaff";
-import { useProductions } from "@/hooks/useProductions";
+import { useProductsForProduction } from "@/hooks/useProductsForProduction";
 import { useCreateProductionTracking, useGenerateProductionCode, useProductionTracking } from "@/hooks/useProductionTracking";
 import { useMaterialRequestsByProduction } from "@/hooks/useMaterialRequest";
 import { useEffect, useState } from "react";
@@ -44,7 +44,7 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
   const generateCode = useGenerateProductionCode();
 
   // Fetch Product for Production requests (only active/unassigned ones)
-  const { data: productForProductionList, isLoading: productsLoading } = useProductions({ page: 1, limit: 100 });
+  const { data: productForProductionList, isLoading: productsLoading } = useProductsForProduction({ page: 1, limit: 100 });
 
   // Fetch staff (tailors) - filter by role if needed
   const { data: staffResponse, isLoading: staffLoading } = useStaff({ page: 1, limit: 100 });

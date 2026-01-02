@@ -131,7 +131,9 @@ export function ProductDefinitionsTable({
                     )}
                   </TableCell>
                   <TableCell className="px-6 py-4 text-right">
-                    <span className="font-semibold text-gray-900">₦{productDef.cost?.toLocaleString() || '0'}</span>
+                    <span className="font-semibold text-gray-900">
+                      ₦{productDef.cost?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    </span>
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <span className="text-sm text-gray-600">

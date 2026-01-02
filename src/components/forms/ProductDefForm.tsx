@@ -454,14 +454,7 @@ const ProductDefForm = ({ className, closeDialog, initialValues }: ProductDefFor
               className="bg-brand-700 hover:bg-brand-800"
               isLoading={isLoading}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isEditing ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                <>{isEditing ? 'Update Product' : 'Create Product'}</>
-              )}
+              {isEditing ? 'Update Product' : 'Create Product'}
             </CustomButton>
           </div>
         </form>

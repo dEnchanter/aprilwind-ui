@@ -17,7 +17,7 @@ import { MaterialPicker } from "@/components/materials/material-picker";
 import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Input } from "@/components/ui/input";
-import { useProductions } from "@/hooks/useProductions";
+import { useProductsForProduction } from "@/hooks/useProductsForProduction";
 import { AlertCircle, CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface MaterialRequestFormProps extends React.ComponentProps<"form"> {
@@ -38,8 +38,8 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
 
   const currentUser = useCurrentUser();
 
-  // Fetch productions
-  const { data: productions, isLoading: productionsIsLoading } = useProductions({ page: 1, limit: 100 });
+  // Fetch product-for-production requests
+  const { data: productions, isLoading: productionsIsLoading } = useProductsForProduction({ page: 1, limit: 100 });
 
   const isEditing = !!initialValues?.id;
   const isLoading = createMaterialRequest.isPending || updateMaterialRequest.isPending;
