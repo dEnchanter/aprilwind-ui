@@ -1,5 +1,5 @@
 // New backend API configuration
-export const baseUrl = 'http://localhost:3000'; // UPDATE THIS if your backend runs on a different port
+export const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://web-production-b6841.up.railway.app';
 
 // No API version path in new backend
 export const apiVersionPath = '';
