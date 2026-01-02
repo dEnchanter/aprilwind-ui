@@ -20,14 +20,14 @@ export const useAllPermissions = () => {
 
       while (hasMore) {
         const response = await fetchGet<{ data: Permission[]; total?: number; page?: number; limit?: number }>(
-          `${Endpoint.GET_PERMISSIONS}?page=${page}&limit=100`
+          `${Endpoint.GET_PERMISSIONS}?page=${page}&limit=200`
         );
 
         allPermissions.push(...response.data);
 
         // Check if there are more pages
         const total = response.total || 0;
-        const fetched = page * (response.limit || 100);
+        const fetched = page * (response.limit || 200);
         hasMore = fetched < total && response.data.length > 0;
         page++;
       }
