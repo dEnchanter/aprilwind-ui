@@ -31,9 +31,9 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
   const { data: staffResponse, isLoading: staffsIsLoading } = useStaff({ page: 1, limit: 100 });
   const staffs = staffResponse?.data || [];
 
-  // Filter to show only tailors for requester dropdown
-  const tailors = staffs.filter((staff: any) =>
-    staff.role?.name?.toLowerCase() === 'tailor'
+  // Filter to show only managers for requester dropdown
+  const managers = staffs.filter((staff: any) =>
+    staff.role?.name?.toLowerCase() === 'manager'
   );
 
   const currentUser = useCurrentUser();
@@ -45,8 +45,11 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
   const isLoading = createMaterialRequest.isPending || updateMaterialRequest.isPending;
   const [additionalMaterials, setAdditionalMaterials] = useState<Array<{ itemId: number; quantity: number }>>([]);
 
-  // Check if current user can select other requesters (supervisors/managers)
-  const canSelectOtherRequesters = currentUser.canSelectOtherRequesters;
+  // Check if current user is Administrator (super admin)
+  const isSuperAdmin = currentUser.role?.name === 'Administrator';
+
+  // Only super admin can select other managers as requesters
+  const canSelectOtherRequesters = isSuperAdmin;
 
   const form = useForm<z.infer<typeof materialRequestSchema>>({
     resolver: zodResolver(materialRequestSchema),
@@ -167,7 +170,7 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
                 <div>
                   <Label className="text-xs">Requester *</Label>
                   {canSelectOtherRequesters ? (
-                    // Supervisors/Managers can select any tailor
+                    // Super Admin can select any manager
                     <Select
                       value={field.value && field.value > 0 ? field.value.toString() : ""}
                       onValueChange={(value) => field.onChange(parseInt(value))}
@@ -175,23 +178,23 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
                     >
                       <FormControl>
                         <SelectTrigger className={field.value && field.value > 0 ? 'font-medium' : ''}>
-                          <SelectValue placeholder="Select tailor" />
+                          <SelectValue placeholder="Select manager" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {tailors.length > 0 ? (
-                          tailors.map((staff: any) => (
+                        {managers.length > 0 ? (
+                          managers.map((staff: any) => (
                             <SelectItem key={staff.id} value={staff.id.toString()}>
                               {staff.staffName || `${staff.firstName || ''} ${staff.lastName || ''}`.trim() || 'Unknown'}
                             </SelectItem>
                           ))
                         ) : (
-                          <div className="p-2 text-xs text-gray-500 text-center">No tailors found</div>
+                          <div className="p-2 text-xs text-gray-500 text-center">No managers found</div>
                         )}
                       </SelectContent>
                     </Select>
                   ) : (
-                    // Regular staff can only create requests for themselves
+                    // Managers can only create requests for themselves
                     <div>
                       <FormControl>
                         <Input
@@ -201,7 +204,7 @@ const MaterialRequestForm = ({ className, closeDialog, initialValues }: Material
                         />
                       </FormControl>
                       <p className="text-xs text-gray-500 mt-1">
-                        You can only create requests for yourself. {currentUser.role?.name && `(${currentUser.role.name})`}
+                        Material requests are created under your name. {currentUser.role?.name && `(${currentUser.role.name})`}
                       </p>
                     </div>
                   )}

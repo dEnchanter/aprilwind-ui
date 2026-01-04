@@ -63,9 +63,9 @@ export function ProductDefinitionsTable({
               <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-left">Code</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-left">Name</TableHead>
-                <TableHead className="py-4 pl-6 pr-8 font-semibold text-gray-700" style={{ textAlign: 'right' }}>Cost</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Product Cost</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-left">Date Created</TableHead>
-                <TableHead className="px-6 py-4 font-semibold text-gray-700" style={{ textAlign: 'right' }}>Actions</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -110,9 +110,9 @@ export function ProductDefinitionsTable({
               <TableRow className="bg-gray-50 hover:bg-gray-50 border-b border-gray-200">
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-left">Code</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-left">Name</TableHead>
-                <TableHead className="py-4 pl-6 pr-8 font-semibold text-gray-700" style={{ textAlign: 'right' }}>Cost</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Product Cost</TableHead>
                 <TableHead className="px-6 py-4 font-semibold text-gray-700 text-left">Date Created</TableHead>
-                <TableHead className="px-6 py-4 font-semibold text-gray-700" style={{ textAlign: 'right' }}>Actions</TableHead>
+                <TableHead className="px-6 py-4 font-semibold text-gray-700 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -132,7 +132,7 @@ export function ProductDefinitionsTable({
                   </TableCell>
                   <TableCell className="px-6 py-4 text-right">
                     <span className="font-semibold text-gray-900">
-                      ₦{productDef.cost?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                      ₦{Number(productDef.cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </TableCell>
                   <TableCell className="px-6 py-4">
