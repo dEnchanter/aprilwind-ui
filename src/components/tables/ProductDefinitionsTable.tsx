@@ -153,12 +153,13 @@ export function ProductDefinitionsTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel className="text-xs font-semibold text-gray-500">
+                        <DropdownMenuLabel key="label" className="text-xs font-semibold text-gray-500">
                           Actions
                         </DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator key="separator" />
                         {onView && (
                           <DropdownMenuItem
+                            key="view"
                             onClick={() => onView(productDef)}
                             className="cursor-pointer"
                           >
@@ -166,7 +167,7 @@ export function ProductDefinitionsTable({
                             View Details
                           </DropdownMenuItem>
                         )}
-                        <PermissionGuard permissions={PermissionPresets.PRODUCT_DEFS_EDIT}>
+                        <PermissionGuard key="edit-guard" permissions={PermissionPresets.PRODUCT_DEFS_EDIT}>
                           <DropdownMenuItem
                             onClick={() => onEdit(productDef)}
                             className="cursor-pointer"

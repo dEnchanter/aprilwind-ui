@@ -238,6 +238,30 @@ export const useMoveProductionToStock = () => {
   });
 };
 
+// Send production to bidding (for fancy work)
+export const useSendToBidding = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: SendToBiddingRequest }) => {
+      const response = await fetchPost<any, SendToBiddingRequest>(
+        Endpoint.SEND_TO_BIDDING(id),
+        data
+      );
+      return response;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: productionTrackingKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productionTrackingKeys.detail(variables.id) });
+      toast.success('Production sent to bidding for fancy work');
+    },
+    onError: (error: any) => {
+      const message = error?.message || 'Failed to send production to bidding';
+      toast.error(message);
+    },
+  });
+};
+
 // Rework rejected production
 export const useReworkProduction = () => {
   const queryClient = useQueryClient();

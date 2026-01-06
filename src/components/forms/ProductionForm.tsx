@@ -184,7 +184,7 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
     // Build payload according to backend DTO
     // Data Flow: ProductForProduction → MaterialRequest (approved) → Production
     // Production.prodRequestedId references MaterialRequest.id (not ProductForProduction.id)
-    // Stage logic: If tailor is assigned, set to "in production", otherwise "Bidding"
+    // Stage logic: If tailor is assigned, set to "in production", otherwise "Pending Assignment"
     const payload: CreateProductionRequest = {
       code: data.code,
       prodRequestedId: approvedMaterialRequest.id, // ✅ MaterialRequest ID (e.g., 9) NOT ProductForProduction ID
@@ -195,7 +195,7 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
         details: data.details || '',
       },
       ...(data.tailorId && { tailorId: data.tailorId }), // Only include if selected
-      stage: data.tailorId ? 'in production' : 'Bidding', // Auto-set stage based on tailor assignment
+      stage: data.tailorId ? 'in production' : 'Pending Assignment', // Auto-set stage based on tailor assignment
     };
 
     createProduction.mutate(payload, {
@@ -583,7 +583,7 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
                       Tailor Assignment (Optional)
                     </div>
                     <div className="text-xs text-amber-700 mt-1">
-                      You can assign a tailor now or later. If no tailor is assigned, the production will be in "Bidding" stage. Once assigned, it automatically moves to "In Production".
+                      You can assign a tailor now or later. If no tailor is assigned, the production will be in "Pending Assignment" stage. Once assigned, it automatically moves to "In Production".
                     </div>
                   </div>
                 </div>
@@ -617,7 +617,7 @@ const ProductionForm = ({ className, closeDialog }: ProductionFormProps) => {
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-gray-500 mt-1">
-                      Leave empty to assign later (production will be in "Bidding" stage)
+                      Leave empty to assign later (production will be in "Pending Assignment" stage)
                     </p>
                     {error && <FormMessage className="text-red-600 text-xs p-1">{error.message}</FormMessage>}
                     </div>

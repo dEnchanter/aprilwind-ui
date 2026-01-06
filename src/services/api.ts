@@ -138,6 +138,7 @@ export const Endpoint = {
   UPDATE_PRODUCTION_STAGE: (id: number) => `productions/${id}/update-stage`,
   QA_REVIEW: (id: number) => `productions/${id}/qa-review`,
   MOVE_TO_STOCK: (id: number) => `productions/${id}/move-to-stock`,
+  SEND_TO_BIDDING: (id: number) => `productions/${id}/send-to-bidding`,
   REWORK_PRODUCTION: (id: number) => `productions/${id}/rework`,
   BATCH_UPDATE_PRODUCTIONS: "productions/batch-update",
   // Aliases

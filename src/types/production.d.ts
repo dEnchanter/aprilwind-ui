@@ -2,11 +2,12 @@
 
 // Production stages
 type ProductionStage =
-  | 'bidding'
-  | 'in_production'
-  | 'await_qa'
-  | 'rejected'
-  | 'completed';
+  | 'pending_assignment' // Initial stage when no tailor is assigned
+  | 'in_production'      // Tailor assigned and working
+  | 'await_qa'           // Submitted for QA review
+  | 'rejected'           // QA rejected
+  | 'completed'          // QA approved
+  | 'bidding';           // Optional fancy work stage (stones, embellishments) after completion
 
 // Production entity
 interface Production {
@@ -78,11 +79,12 @@ interface ProductionAnalytics {
   inProgressProductions: number;
   averageCompletionTime: number;
   byStage: {
-    bidding: number;
+    pending_assignment: number;
     in_production: number;
     await_qa: number;
     rejected: number;
     completed: number;
+    bidding: number;
   };
   byTailor: Array<{
     tailorId: number;
@@ -136,6 +138,11 @@ interface MoveToStockRequest {
   receivedBy: number;
   location?: string;
   notes?: string;
+}
+
+interface SendToBiddingRequest {
+  staffId: number;
+  notes?: string; // Description of fancy work needed (e.g., "Add stones and beading to neckline")
 }
 
 interface ReworkProductionRequest {

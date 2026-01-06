@@ -12,3 +12,10 @@ export const productionStagesSchema = z.object({
 });
 
 export type ProductionStagesFormData = z.infer<typeof productionStagesSchema>;
+
+// Schema for sending production to bidding (fancy work)
+export const sendToBiddingSchema = z.object({
+  notes: z.string().min(1, "Please describe the fancy work needed (e.g., stones, beading, embellishments)"),
+});
+
+export type SendToBiddingFormData = z.infer<typeof sendToBiddingSchema>;

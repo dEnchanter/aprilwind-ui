@@ -30,6 +30,7 @@ import {
   Box,
   RefreshCw,
   CheckCircle2,
+  Sparkles,
 } from "lucide-react";
 import { formatDate, cn } from "@/lib/utils";
 import {
@@ -68,7 +69,9 @@ interface ProductionsTrackingTableProps {
 }
 
 // Helper function to get stage badge styling
-const getStageBadge = (stage: string, movedToStock?: boolean) => {
+const getStageBadge = (stage: string, production?: any) => {
+  const movedToStock = production?.movedToStock;
+
   // If moved to stock, show special badge
   if (movedToStock && stage?.toLowerCase() === 'completed') {
     return (
@@ -81,23 +84,45 @@ const getStageBadge = (stage: string, movedToStock?: boolean) => {
     );
   }
 
-  const stages: Record<string, { label: string; className: string }> = {
-    bidding: { label: 'Bidding', className: 'bg-purple-100 text-purple-700' },
-    'in production': { label: 'In Production', className: 'bg-blue-100 text-blue-700' },
-    'await qa': { label: 'Await QA', className: 'bg-amber-100 text-amber-700' },
-    rejected: { label: 'Rejected', className: 'bg-red-100 text-red-700' },
-    completed: { label: 'Completed', className: 'bg-green-100 text-green-700' },
-  };
+  // Check if production went through bidding
+  const hasBiddingHistory = production ? (() => {
+    const stageHistory = production.stageHistory || production.productionStages || [];
+    return stageHistory.some((s: any) =>
+      s.stage?.toLowerCase() === 'bidding' || s.stateName?.toLowerCase() === 'bidding'
+    );
+  })() : false;
 
   const normalizedStage = stage?.toLowerCase() || '';
-  const stageInfo = stages[normalizedStage] || { label: stage, className: 'bg-gray-100 text-gray-700' };
+
+  // Determine label and styling based on stage and bidding history
+  let label = '';
+  let className = '';
+
+  if (normalizedStage === 'completed') {
+    label = hasBiddingHistory ? 'Bidding Completed' : 'Completed';
+    className = 'bg-green-100 text-green-700';
+  } else if (normalizedStage === 'rejected') {
+    label = hasBiddingHistory ? 'Bidding Rejected' : 'Rejected';
+    className = 'bg-red-100 text-red-700';
+  } else {
+    const stages: Record<string, { label: string; className: string }> = {
+      'pending assignment': { label: 'Pending Assignment', className: 'bg-gray-100 text-gray-700' },
+      'in production': { label: 'In Production', className: 'bg-blue-100 text-blue-700' },
+      'await qa': { label: 'Await QA', className: 'bg-amber-100 text-amber-700' },
+      bidding: { label: 'Bidding', className: 'bg-purple-100 text-purple-700' },
+    };
+
+    const stageInfo = stages[normalizedStage] || { label: stage, className: 'bg-gray-100 text-gray-700' };
+    label = stageInfo.label;
+    className = stageInfo.className;
+  }
 
   return (
     <span className={cn(
       "px-2 py-1 rounded text-xs font-medium",
-      stageInfo.className
+      className
     )}>
-      {stageInfo.label}
+      {label}
     </span>
   );
 };
@@ -155,6 +180,10 @@ export function ProductionsTrackingTable({
   const [productionForSubmit, setProductionForSubmit] = useState<any>(null);
   const [submitNotes, setSubmitNotes] = useState('');
 
+  const [sendToBiddingDialog, setSendToBiddingDialog] = useState(false);
+  const [productionForBidding, setProductionForBidding] = useState<any>(null);
+  const [biddingNotes, setBiddingNotes] = useState('');
+
   // Filter by search and exclude items moved to stock
   const filteredData = (searchTerm
     ? allProductions.filter((prod: any) =>
@@ -167,6 +196,15 @@ export function ProductionsTrackingTable({
 
   const totalPages = Math.ceil(filteredData.length / limit);
   const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
+
+  // Helper function to check if production has completed bidding cycle
+  const hasBiddingCompleted = (production: any) => {
+    if (!production) return false;
+    const stageHistory = production.stageHistory || production.productionStages || [];
+    return stageHistory.some((stage: any) =>
+      stage.stage?.toLowerCase() === 'bidding' || stage.stateName?.toLowerCase() === 'bidding'
+    );
+  };
 
   const confirmAssignTailor = () => {
     const tailorIdNum = parseInt(selectedTailorId);
@@ -240,19 +278,45 @@ export function ProductionsTrackingTable({
 
   const confirmRework = () => {
     if (productionForRework && currentUser.staffId) {
-      reworkProductionMutation.mutate({
-        id: productionForRework.id,
-        data: {
-          staffId: currentUser.staffId,
-          notes: reworkNotes || undefined,
-        },
-      }, {
-        onSuccess: () => {
-          setReworkDialog(false);
-          setProductionForRework(null);
-          setReworkNotes('');
-        },
-      });
+      // Check if this was rejected from bidding by looking at stage history
+      const stageHistory = productionForRework.stageHistory || productionForRework.productionStages || [];
+      const wasBiddingRejection = stageHistory.some((stage: any) =>
+        stage.stage?.toLowerCase() === 'bidding' || stage.stateName?.toLowerCase() === 'bidding'
+      );
+
+      // If rejected from bidding, send back to bidding; otherwise use regular rework endpoint
+      if (wasBiddingRejection) {
+        // Rework bidding - send back to bidding stage
+        moveToStageMutation.mutate({
+          id: productionForRework.id,
+          data: {
+            stage: "Bidding",
+            staffId: currentUser.staffId,
+            notes: reworkNotes || undefined,
+          },
+        }, {
+          onSuccess: () => {
+            setReworkDialog(false);
+            setProductionForRework(null);
+            setReworkNotes('');
+          },
+        });
+      } else {
+        // Regular rework - use existing rework endpoint
+        reworkProductionMutation.mutate({
+          id: productionForRework.id,
+          data: {
+            staffId: currentUser.staffId,
+            notes: reworkNotes || undefined,
+          },
+        }, {
+          onSuccess: () => {
+            setReworkDialog(false);
+            setProductionForRework(null);
+            setReworkNotes('');
+          },
+        });
+      }
     }
   };
 
@@ -270,6 +334,25 @@ export function ProductionsTrackingTable({
           setSubmitForQADialog(false);
           setProductionForSubmit(null);
           setSubmitNotes('');
+        },
+      });
+    }
+  };
+
+  const confirmSendToBidding = () => {
+    if (productionForBidding && currentUser.staffId) {
+      moveToStageMutation.mutate({
+        id: productionForBidding.id,
+        data: {
+          stage: "Bidding",
+          staffId: currentUser.staffId,
+          notes: biddingNotes || undefined,
+        },
+      }, {
+        onSuccess: () => {
+          setSendToBiddingDialog(false);
+          setProductionForBidding(null);
+          setBiddingNotes('');
         },
       });
     }
@@ -387,7 +470,7 @@ export function ProductionsTrackingTable({
                       )}
                     </TableCell>
                     <TableCell className="px-6 py-4">
-                      {getStageBadge(production.stage, movedToStock)}
+                      {getStageBadge(production.stage, production)}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-sm text-gray-600">
                       {production.assignDate ? formatDate(production.assignDate) : '-'}
@@ -419,7 +502,7 @@ export function ProductionsTrackingTable({
 
                           {!movedToStock && (
                             <>
-                              {/* Move to Stock */}
+                              {/* Completed Productions: Move to Stock OR Send to Bidding */}
                               {production.stage?.toLowerCase() === 'completed' && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -433,13 +516,26 @@ export function ProductionsTrackingTable({
                                     <Box className="mr-2 h-4 w-4" />
                                     Move to Stock
                                   </DropdownMenuItem>
+                                  {/* Only show Send to Bidding if production hasn't been through bidding yet */}
+                                  {!hasBiddingCompleted(production) && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setProductionForBidding(production);
+                                        setSendToBiddingDialog(true);
+                                      }}
+                                      className="cursor-pointer text-purple-700"
+                                    >
+                                      <Sparkles className="mr-2 h-4 w-4" />
+                                      Send to Bidding
+                                    </DropdownMenuItem>
+                                  )}
                                 </>
                               )}
 
                               {!isCompleted && (
                                 <>
                                   {/* Assign Tailor */}
-                                  {!production.tailor && production.stage?.toLowerCase() === 'bidding' && (
+                                  {!production.tailor && production.stage?.toLowerCase() === 'pending assignment' && (
                                     <>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
@@ -472,8 +568,8 @@ export function ProductionsTrackingTable({
                                     </>
                                   )}
 
-                                  {/* QA Review */}
-                                  {production.stage?.toLowerCase() === 'await qa' && (
+                                  {/* QA Review - for both Await QA and Bidding stages */}
+                                  {(production.stage?.toLowerCase() === 'await qa' || production.stage?.toLowerCase() === 'bidding') && (
                                     <>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
@@ -484,7 +580,7 @@ export function ProductionsTrackingTable({
                                         className="cursor-pointer"
                                       >
                                         <FileCheck className="mr-2 h-4 w-4" />
-                                        QA Review
+                                        QA Review {production.stage?.toLowerCase() === 'bidding' ? '(Bidding)' : ''}
                                       </DropdownMenuItem>
                                     </>
                                   )}
@@ -501,7 +597,7 @@ export function ProductionsTrackingTable({
                                         className="cursor-pointer text-amber-700"
                                       >
                                         <RefreshCw className="mr-2 h-4 w-4" />
-                                        Send for Rework
+                                        {hasBiddingCompleted(production) ? 'Send for Bidding Rework' : 'Send for Rework'}
                                       </DropdownMenuItem>
                                     </>
                                   )}
@@ -780,9 +876,13 @@ export function ProductionsTrackingTable({
       <AlertDialog open={reworkDialog} onOpenChange={setReworkDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Send Production for Rework</AlertDialogTitle>
+            <AlertDialogTitle>
+              {hasBiddingCompleted(productionForRework) ? 'Send for Bidding Rework' : 'Send Production for Rework'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Send rejected production back to the tailor for rework. The production will return to &ldquo;In Production&#34; stage.
+              {hasBiddingCompleted(productionForRework)
+                ? 'Send rejected bidding work back for rework. The production will return to "Bidding" stage.'
+                : 'Send rejected production back to the tailor for rework. The production will return to "In Production" stage.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4 py-4">
@@ -802,8 +902,17 @@ export function ProductionsTrackingTable({
                 <div className="text-amber-900">
                   <p className="font-semibold text-xs mb-1">Rework Notice</p>
                   <p className="text-xs">
-                    This production will be sent back to <span className="font-medium">{productionForRework?.tailor?.staffName || 'the assigned tailor'}</span> for rework.
-                    The stage will change from <span className="font-medium">&ldquo;Rejected&ldquo;</span> to <span className="font-medium">&#34;In Production&#34;</span>.
+                    {hasBiddingCompleted(productionForRework) ? (
+                      <>
+                        This production will be sent back for bidding rework.
+                        The stage will change from <span className="font-medium">&ldquo;Rejected&rdquo;</span> to <span className="font-medium">&ldquo;Bidding&rdquo;</span>.
+                      </>
+                    ) : (
+                      <>
+                        This production will be sent back to <span className="font-medium">{productionForRework?.tailor?.staffName || 'the assigned tailor'}</span> for rework.
+                        The stage will change from <span className="font-medium">&ldquo;Rejected&rdquo;</span> to <span className="font-medium">&ldquo;In Production&rdquo;</span>.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -813,10 +922,10 @@ export function ProductionsTrackingTable({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmRework}
-              disabled={reworkProductionMutation.isPending}
+              disabled={reworkProductionMutation.isPending || moveToStageMutation.isPending}
               className="bg-amber-600 hover:bg-amber-700"
             >
-              {reworkProductionMutation.isPending ? 'Sending for Rework...' : 'Send for Rework'}
+              {(reworkProductionMutation.isPending || moveToStageMutation.isPending) ? 'Sending for Rework...' : 'Send for Rework'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -863,6 +972,53 @@ export function ProductionsTrackingTable({
               className="bg-blue-600 hover:bg-blue-700"
             >
               {moveToStageMutation.isPending ? 'Submitting...' : 'Submit for QA'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Send to Bidding Dialog */}
+      <AlertDialog open={sendToBiddingDialog} onOpenChange={setSendToBiddingDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send to Bidding</AlertDialogTitle>
+            <AlertDialogDescription>
+              Send this completed production for additional fancy work (stones, beads, embellishments, etc.).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="bidding-notes">Fancy Work Description *</Label>
+              <Textarea
+                id="bidding-notes"
+                placeholder="Describe the fancy work needed (e.g., Add stones and beading to neckline, Crystal embellishments on sleeves...)"
+                value={biddingNotes}
+                onChange={(e) => setBiddingNotes(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Sparkles className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                <div className="text-purple-900">
+                  <p className="font-semibold text-xs mb-1">Bidding Notice</p>
+                  <p className="text-xs">
+                    This production will be sent for fancy work (bidding stage) and will require QA review after completion.
+                    The stage will change from <span className="font-medium">&ldquo;Completed&rdquo;</span> to <span className="font-medium">&ldquo;Bidding&rdquo;</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmSendToBidding}
+              disabled={!biddingNotes.trim() || moveToStageMutation.isPending}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {moveToStageMutation.isPending ? 'Sending...' : 'Send to Bidding'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

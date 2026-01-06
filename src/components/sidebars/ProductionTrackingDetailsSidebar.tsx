@@ -2,7 +2,7 @@
 "use client"
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Package, Calendar, User, Layers, FileCheck, Box } from "lucide-react";
+import { Package, Calendar, User, Layers, FileCheck, Box, Sparkles } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { cn, formatDate } from "@/lib/utils";
@@ -14,24 +14,46 @@ interface ProductionTrackingDetailsSidebarProps {
 }
 
 // Helper function to get stage badge styling
-const getStageBadge = (stage: string) => {
-  const stages: Record<string, { label: string; className: string }> = {
-    bidding: { label: 'Bidding', className: 'bg-purple-100 text-purple-700' },
-    'in production': { label: 'In Production', className: 'bg-blue-100 text-blue-700' },
-    'await qa': { label: 'Await QA', className: 'bg-amber-100 text-amber-700' },
-    rejected: { label: 'Rejected', className: 'bg-red-100 text-red-700' },
-    completed: { label: 'Completed', className: 'bg-green-100 text-green-700' },
-  };
+const getStageBadge = (stage: string, production?: any) => {
+  // Check if production went through bidding
+  const hasBiddingHistory = production ? (() => {
+    const stageHistory = production.stageHistory || production.productionStages || [];
+    return stageHistory.some((s: any) =>
+      s.stage?.toLowerCase() === 'bidding' || s.stateName?.toLowerCase() === 'bidding'
+    );
+  })() : false;
 
   const normalizedStage = stage?.toLowerCase() || '';
-  const stageInfo = stages[normalizedStage] || { label: stage, className: 'bg-gray-100 text-gray-700' };
+
+  // Determine label and styling based on stage and bidding history
+  let label = '';
+  let className = '';
+
+  if (normalizedStage === 'completed') {
+    label = hasBiddingHistory ? 'Bidding Completed' : 'Completed';
+    className = 'bg-green-100 text-green-700';
+  } else if (normalizedStage === 'rejected') {
+    label = hasBiddingHistory ? 'Bidding Rejected' : 'Rejected';
+    className = 'bg-red-100 text-red-700';
+  } else {
+    const stages: Record<string, { label: string; className: string }> = {
+      'pending assignment': { label: 'Pending Assignment', className: 'bg-gray-100 text-gray-700' },
+      'in production': { label: 'In Production', className: 'bg-blue-100 text-blue-700' },
+      'await qa': { label: 'Await QA', className: 'bg-amber-100 text-amber-700' },
+      bidding: { label: 'Bidding', className: 'bg-purple-100 text-purple-700' },
+    };
+
+    const stageInfo = stages[normalizedStage] || { label: stage, className: 'bg-gray-100 text-gray-700' };
+    label = stageInfo.label;
+    className = stageInfo.className;
+  }
 
   return (
     <span className={cn(
       "px-2 py-1 rounded text-xs font-medium",
-      stageInfo.className
+      className
     )}>
-      {stageInfo.label}
+      {label}
     </span>
   );
 };
@@ -77,7 +99,7 @@ const ProductionTrackingDetailsSidebar = ({ open, onClose, production }: Product
               <div>
                 <label className="text-xs text-gray-500">Stage</label>
                 <div className="mt-1">
-                  {getStageBadge(production.stage)}
+                  {getStageBadge(production.stage, production)}
                 </div>
               </div>
             </div>
@@ -280,13 +302,52 @@ const ProductionTrackingDetailsSidebar = ({ open, onClose, production }: Product
             </>
           )}
 
+          {/* Bidding Information */}
+          {production.stage?.toLowerCase() === 'bidding' && (
+            <>
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                  Bidding
+                </h3>
+
+                <div className="space-y-3 pl-6">
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p className="text-xs text-purple-900 font-medium mb-1">
+                      This production is currently in bidding stage for additional fancy work.
+                    </p>
+                    <p className="text-xs text-purple-700">
+                      Examples: stones, beads, crystals, embroidery, special decorative elements
+                    </p>
+                  </div>
+
+                  {production.biddingNotes && (
+                    <div>
+                      <label className="text-xs text-gray-500">Fancy Work Description</label>
+                      <p className="text-sm">{production.biddingNotes}</p>
+                    </div>
+                  )}
+
+                  {production.biddingStartDate && (
+                    <div>
+                      <label className="text-xs text-gray-500">Bidding Started</label>
+                      <p className="text-sm font-medium">{formatDate(production.biddingStartDate)}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <Separator />
+            </>
+          )}
+
           {/* QA Review */}
           {production.qaReviewDate && (
             <>
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <FileCheck className="h-4 w-4" />
-                  QA Review
+                  QA Review {production.qaReviewType === 'bidding' ? '(Bidding Work)' : ''}
                 </h3>
 
                 <div className="space-y-3 pl-6">
